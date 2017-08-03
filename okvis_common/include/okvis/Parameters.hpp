@@ -235,6 +235,7 @@ struct WindParameters{
 struct Optimization{
   int max_iterations; ///< Maximum iterations the optimization should perform.
   int min_iterations; ///< Minimum iterations the optimization should perform.
+  int num_threads;
   double timeLimitForMatchingAndOptimization; ///< The time limit for both matching and optimization. [s]
   okvis::Duration timeReserve; ///< Store a little more on the beginning and end of the IMU buffer. [s]
   double detectionThreshold;  ///< Keypoint detection threshold.

@@ -733,7 +733,8 @@ void ThreadedKFVio::optimizationLoop() {
       std::lock_guard<std::mutex> l(estimator_mutex_);
       optimizationTimer.start();
       //if(frontend_.isInitialized()){
-        estimator_.optimize(parameters_.optimization.max_iterations, 2, false);
+        estimator_.optimize(parameters_.optimization.max_iterations,
+                            parameters_.optimization.num_threads, false);
       //}
       /*if (estimator_.numFrames() > 0 && !frontend_.isInitialized()){
         // undo translation

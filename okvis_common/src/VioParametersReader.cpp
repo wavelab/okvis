@@ -118,6 +118,15 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
         << "ceres_options: maxIterations parameter not provided. Setting to default maxIterations=10.";
     vioParameters_.optimization.max_iterations = 10;
   }
+  if (file["ceres_options"]["numThreads"].isInt()) {
+    file["ceres_options"]["numThreads"]
+            >> vioParameters_.optimization.num_threads;
+  } else {
+    LOG(WARNING)
+            << "ceres_options: numThreads parameter not provided. Setting to "
+                    "default numThreads=2.";
+    vioParameters_.optimization.num_threads = 2;
+  }
   // ceres time limit
   if (file["ceres_options"]["timeLimit"].isReal()) {
     file["ceres_options"]["timeLimit"] >> vioParameters_.optimization.timeLimitForMatchingAndOptimization;
