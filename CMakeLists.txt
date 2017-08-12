@@ -248,25 +248,25 @@ if(${BUILD_TESTS})
   # http://stackoverflow.com/questions/9689183/cmake-googletest
   ExternalProject_Add(
     googlemock
-    URL https://googlemock.googlecode.com/files/gmock-1.7.0.zip
+    URL https://github.com/google/googletest/archive/release-1.8.0.zip
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gmock
     CMAKE_ARGS -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
     BUILD_COMMAND make -j${N_CORES}
     INSTALL_COMMAND ""
   )
   ExternalProject_Get_Property(googlemock source_dir)
-  set(GMOCK_INCLUDE_DIR ${source_dir}/include)
-  set(GTEST_INCLUDE_DIR ${source_dir}/gtest/include)
+  set(GMOCK_INCLUDE_DIR ${source_dir}/googlemock/include)
+  set(GTEST_INCLUDE_DIR ${source_dir}/googletest/include)
   include_directories(BEFORE ${GMOCK_INCLUDE_DIR})
   include_directories(BEFORE ${GTEST_INCLUDE_DIR})
   ExternalProject_Get_Property(googlemock binary_dir)
-  set(GMOCK_LIBRARY_PATH ${binary_dir}/${CMAKE_FIND_LIBRARY_PREFIXES}gmock.a)
+  set(GMOCK_LIBRARY_PATH ${binary_dir}/googlemock/${CMAKE_FIND_LIBRARY_PREFIXES}gmock.a)
   set(GMOCK_LIBRARY gmock)
   add_library(${GMOCK_LIBRARY} UNKNOWN IMPORTED)
   set_property(TARGET ${GMOCK_LIBRARY} PROPERTY IMPORTED_LOCATION
                   ${GMOCK_LIBRARY_PATH} )
   add_dependencies(${GMOCK_LIBRARY} googlemock)
-  set(GTEST_LIBRARY_PATH ${binary_dir}/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a)
+  set(GTEST_LIBRARY_PATH ${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a)
   set(GTEST_LIBRARY gtestlocal)
   add_library(${GTEST_LIBRARY} UNKNOWN IMPORTED)
   set_property(TARGET ${GTEST_LIBRARY} PROPERTY IMPORTED_LOCATION
