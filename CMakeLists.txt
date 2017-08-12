@@ -12,7 +12,9 @@ set(OKVIS_VERSION
 option (USE_SYSTEM_BRISK
         "Use brisk via find_package rather than downloading it as part of okvis" OFF) 
 option (USE_SYSTEM_CERES
-        "Use ceres via find_package rather than downloading it as part of okvis" OFF) 
+        "Use ceres via find_package rather than downloading it as part of okvis" OFF)
+option (USE_SYSTEM_OPENGV
+        "Use opengv via find_package rather than downloading it as part of okvis" OFF)
 option (BUILD_APPS
         "Builds a demo app (which requires boost)" ON) 
 option (BUILD_TESTS
@@ -208,40 +210,50 @@ else()
 endif()
 
 # OpenGV
-set(CMAKE_CXX_FLAGS_WSUPPRESS 
-      "${CMAKE_CXX_FLAGS} -Wno-unused-parameter -Wno-maybe-uninitialized -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-pedantic")
-message(STATUS "NOTE: Suppressing some warnings when compiling OpenGV.")
-ExternalProject_Add(opengv_external
-    GIT_REPOSITORY https://github.com/laurentkneip/opengv
-    GIT_TAG cc32b16281aa6eab67cb28a61cf87a2a5c2b0961
-    UPDATE_COMMAND ""
-    PATCH_COMMAND # forcing static libs
-        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/cmake/opengv/CMakeLists.txt ${CMAKE_CURRENT_BINARY_DIR}/opengv/src/opengv/CMakeLists.txt
-        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/cmake/opengv/opengvConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/opengv/src/opengv/opengvConfig.cmake.in
-        COMMENT "Forcing our own CMakeLists.txt to build OpenGV (static library support)."
-    CMAKE_ARGS 
-      -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> 
-      -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} 
-      -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS_WSUPPRESS} # suppress warnings...
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/opengv
-    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/opengv/src/opengv
-    INSTALL_DIR ${CMAKE_BINARY_DIR}
-    BUILD_IN_SOURCE 0
-    BUILD_COMMAND make -j${N_CORES}
-    INSTALL_COMMAND make install
-)
-add_library(opengv STATIC IMPORTED)
-set(OpenGV_LIBRARIES opengv)
-set_target_properties(opengv PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libopengv.a)
-add_dependencies(${OpenGV_LIBRARIES} opengv_external)
+if(${USE_SYSTEM_OPENGV})
+  # okvis requires an older version of opengv (see git tag below) which doesn't
+  # have a cmake config. For now assume it's in standard paths.
+  find_library(OpenGV_LIBRARIES opengv REQUIRED)
+  if(NOT OpenGV_LIBRARIES)
+    message(FATAL_ERROR "Could not find system opengv library")
+  endif()
+  message(STATUS "Using system OpenGV. Found at ${OpenGV_LIBRARIES}")
+else()
+  set(CMAKE_CXX_FLAGS_WSUPPRESS
+        "${CMAKE_CXX_FLAGS} -Wno-unused-parameter -Wno-maybe-uninitialized -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-pedantic")
+  message(STATUS "NOTE: Suppressing some warnings when compiling OpenGV.")
+  ExternalProject_Add(opengv_external
+      GIT_REPOSITORY https://github.com/laurentkneip/opengv
+      GIT_TAG cc32b16281aa6eab67cb28a61cf87a2a5c2b0961
+      UPDATE_COMMAND ""
+      PATCH_COMMAND # forcing static libs
+          COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/cmake/opengv/CMakeLists.txt ${CMAKE_CURRENT_BINARY_DIR}/opengv/src/opengv/CMakeLists.txt
+          COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/cmake/opengv/opengvConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/opengv/src/opengv/opengvConfig.cmake.in
+          COMMENT "Forcing our own CMakeLists.txt to build OpenGV (static library support)."
+      CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+        -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS_WSUPPRESS} # suppress warnings...
+      PREFIX ${CMAKE_CURRENT_BINARY_DIR}/opengv
+      SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/opengv/src/opengv
+      INSTALL_DIR ${CMAKE_BINARY_DIR}
+      BUILD_IN_SOURCE 0
+      BUILD_COMMAND make -j${N_CORES}
+      INSTALL_COMMAND make install
+  )
+  add_library(opengv STATIC IMPORTED)
+  set(OpenGV_LIBRARIES opengv)
+  set_target_properties(opengv PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libopengv.a)
+  add_dependencies(${OpenGV_LIBRARIES} opengv_external)
 
-# install it once built
-install(FILES ${CMAKE_BINARY_DIR}/lib/libopengv.a 
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-install(DIRECTORY ${CMAKE_BINARY_DIR}/include/opengv/ 
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/opengv/)
-install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/CMake/opengv/
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/CMake/opengv/)
+  # install it once built
+  install(FILES ${CMAKE_BINARY_DIR}/lib/libopengv.a
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+  install(DIRECTORY ${CMAKE_BINARY_DIR}/include/opengv/
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/opengv/)
+  install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/CMake/opengv/
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/CMake/opengv/)
+endif()
 
 if(${BUILD_TESTS})
   # gmock
