@@ -60,9 +60,9 @@ if(APPLE)
   # The clang compiler (on osx) is somehow much more strict
   # than the compilers on ubuntu and so this does not seem
   # possible on OSX just yet.
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -std=c++11 -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fPIC")
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -std=c++11 -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fPIC")
 endif()
 
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm*")
@@ -70,7 +70,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm*")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon")
 else()
   message(STATUS "Assuming SSE instructions available.")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -march=native  -mssse3")
 endif()
 
 get_directory_property(defs COMPILE_DEFINITIONS)
