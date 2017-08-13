@@ -170,7 +170,7 @@ void okvis_walltime(uint32_t& sec, uint32_t& nsec)
 /**
  * @brief Simple representation of the rt library nanosleep function.
  */
-int okvis_nanosleep(const uint32_t &sec, const uint32_t &nsec) {
+int okvis_nanosleep(const time_t &sec, const long &nsec) {
 #if defined(WIN32)
   HANDLE timer = NULL;
   LARGE_INTEGER sleepTime;
@@ -205,7 +205,7 @@ int okvis_nanosleep(const uint32_t &sec, const uint32_t &nsec) {
  *
  * @todo Fully implement the win32 parts, currently just like a regular sleep.
  */
-bool okvis_wallsleep(uint32_t sec, uint32_t nsec) {
+bool okvis_wallsleep(time_t sec, long nsec) {
 #if defined(WIN32)
   okvis_nanosleep(sec,nsec);
 #else
