@@ -350,8 +350,32 @@ class Frontend : public VioFrontendInterface {
                        bool removeOutliers = true);  // for wide-baseline matches (good initial guess)
 
   /**
+   * @brief Match a new multiframe to existing keyframes
+   * Calls the appropriate templated version of matchToLastFrame()
+   * @throws okvis::Frontend::Exception on unsupported distortion type.
+   * @warning As this function uses the estimator it is not threadsafe.
+   * @param      matching_algorithm     Algorithm to match new keypoints to existing landmarks.
+   * @param      estimator              Estimator.
+   * @param[in]  params                 Parameter struct.
+   * @param[in]  currentFrameId         ID of the current frame that should be matched against keyframes.
+   * @param[out] rotationOnly           Was the rotation only RANSAC motion model good enough to
+   *                                    explain the motion between the new frame and the keyframes?
+   * @param[in]  usePoseUncertainty     Use the pose uncertainty for the matching.
+   * @param[out] uncertainMatchFraction Return the fraction of uncertain matches. Set to nullptr if not interested.
+   * @param[in]  removeOutliers         Remove outliers during RANSAC.
+   * @return The number of matches in total.
+   */
+  int matchToKeyframes(okvis::cameras::NCameraSystem::DistortionType distortionType,
+                       okvis::Estimator& estimator,
+                       const okvis::VioParameters& params,
+                       const uint64_t currentFrameId, bool& rotationOnly,
+                       bool usePoseUncertainty = true,
+                       double* uncertainMatchFraction = 0,
+                       bool removeOutliers = true);  // for wide-baseline matches (good initial guess)
+
+  /**
    * @brief Match a new multiframe to the last frame.
-   * @tparam MATCHING_ALGORITHM Algorithm to match new keypoints to existing landmarks
+   * @tparam MATCHING_ALGORITHM Algorithm to match new keypoints to existing landmarks.
    * @warning As this function uses the estimator it is not threadsafe.
    * @param estimator           Estimator.
    * @param params              Parameter struct.
@@ -368,6 +392,26 @@ class Frontend : public VioFrontendInterface {
                        bool removeOutliers = true);
 
   /**
+   * @brief Match a new multiframe to the last frame.
+   * Calls the appropriate templated version of matchToLastFrame()
+   * @throws okvis::Frontend::Exception on unsupported distortion type.
+   * @warning As this function uses the estimator it is not threadsafe.
+   * @param matching_algorithm  Algorithm to match new keypoints to existing landmarks.
+   * @param estimator           Estimator.
+   * @param params              Parameter struct.
+   * @param currentFrameId      ID of the current frame that should be matched against the last one.
+   * @param usePoseUncertainty  Use the pose uncertainty for the matching.
+   * @param removeOutliers      Remove outliers during RANSAC.
+   * @return The number of matches in total.
+   */
+  int matchToLastFrame(okvis::cameras::NCameraSystem::DistortionType distortionType,
+                       okvis::Estimator& estimator,
+                       const okvis::VioParameters& params,
+                       const uint64_t currentFrameId,
+                       bool usePoseUncertainty = true,
+                       bool removeOutliers = true);
+
+  /**
    * @brief Match the frames inside the multiframe to each other to initialise new landmarks.
    * @tparam MATCHING_ALGORITHM Algorithm to match new keypoints to existing landmarks.
    * @warning As this function uses the estimator it is not threadsafe.
@@ -376,6 +420,19 @@ class Frontend : public VioFrontendInterface {
    */
   template<class MATCHING_ALGORITHM>
   void matchStereo(okvis::Estimator& estimator,
+                   std::shared_ptr<okvis::MultiFrame> multiFrame);
+
+  /**
+   * @brief Match the frames inside the multiframe to each other to initialise new landmarks.
+   * Calls the appropriate templated version of matchStereo()
+   * @throws okvis::Frontend::Exception on unsupported distortion type.
+   * @warning As this function uses the estimator it is not threadsafe.
+   * @param matching_algorithm  Algorithm to match new keypoints to existing landmarks.
+   * @param estimator           Estimator.
+   * @param multiFrame          Multiframe containing the frames to match.
+   */
+  void matchStereo(okvis::cameras::NCameraSystem::DistortionType distortionType,
+                   okvis::Estimator& estimator,
                    std::shared_ptr<okvis::MultiFrame> multiFrame);
 
   /**

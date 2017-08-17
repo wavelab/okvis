@@ -148,39 +148,11 @@ bool Frontend::dataAssociationAndInitialization(
 
     // match to last keyframe
     TimerSwitchable matchKeyframesTimer("2.4.1 matchToKeyframes");
-    switch (distortionType) {
-      case okvis::cameras::NCameraSystem::RadialTangential: {
-        num3dMatches = matchToKeyframes<
-            VioKeyframeWindowMatchingAlgorithm<
-                okvis::cameras::PinholeCamera<
-                    okvis::cameras::RadialTangentialDistortion> > >(
-            estimator, params, framesInOut->id(), rotationOnly, false,
-            &uncertainMatchFraction);
-        break;
-      }
-      case okvis::cameras::NCameraSystem::Equidistant: {
-        num3dMatches = matchToKeyframes<
-            VioKeyframeWindowMatchingAlgorithm<
-                okvis::cameras::PinholeCamera<
-                    okvis::cameras::EquidistantDistortion> > >(
-            estimator, params, framesInOut->id(), rotationOnly, false,
-            &uncertainMatchFraction);
-        break;
-      }
-      case okvis::cameras::NCameraSystem::RadialTangential8: {
-        num3dMatches = matchToKeyframes<
-            VioKeyframeWindowMatchingAlgorithm<
-                okvis::cameras::PinholeCamera<
-                    okvis::cameras::RadialTangentialDistortion8> > >(
-            estimator, params, framesInOut->id(), rotationOnly, false,
-            &uncertainMatchFraction);
-        break;
-      }
-      default:
-        OKVIS_THROW(Exception, "Unsupported distortion type.")
-        break;
-    }
+    num3dMatches = matchToKeyframes(
+        distortionType, estimator, params, framesInOut->id(), rotationOnly,
+        false, &uncertainMatchFraction);
     matchKeyframesTimer.stop();
+
     if (!isInitialized_) {
       if (!rotationOnly) {
         isInitialized_ = true;
@@ -197,74 +169,15 @@ bool Frontend::dataAssociationAndInitialization(
 
     // match to last frame
     TimerSwitchable matchToLastFrameTimer("2.4.2 matchToLastFrame");
-    switch (distortionType) {
-      case okvis::cameras::NCameraSystem::RadialTangential: {
-        matchToLastFrame<
-            VioKeyframeWindowMatchingAlgorithm<
-                okvis::cameras::PinholeCamera<
-                    okvis::cameras::RadialTangentialDistortion> > >(
-            estimator, params, framesInOut->id(),
-            false);
-        break;
-      }
-      case okvis::cameras::NCameraSystem::Equidistant: {
-        matchToLastFrame<
-            VioKeyframeWindowMatchingAlgorithm<
-                okvis::cameras::PinholeCamera<
-                    okvis::cameras::EquidistantDistortion> > >(
-            estimator, params, framesInOut->id(),
-            false);
-        break;
-      }
-      case okvis::cameras::NCameraSystem::RadialTangential8: {
-        matchToLastFrame<
-            VioKeyframeWindowMatchingAlgorithm<
-                okvis::cameras::PinholeCamera<
-                    okvis::cameras::RadialTangentialDistortion8> > >(
-            estimator, params, framesInOut->id(),
-            false);
-
-        break;
-      }
-      default:
-        OKVIS_THROW(Exception, "Unsupported distortion type.")
-        break;
-    }
+    matchToLastFrame(distortionType, estimator, params, framesInOut->id(),
+                     false);
     matchToLastFrameTimer.stop();
   } else
     *asKeyframe = true;  // first frame needs to be keyframe
 
   // do stereo match to get new landmarks
   TimerSwitchable matchStereoTimer("2.4.3 matchStereo");
-  switch (distortionType) {
-    case okvis::cameras::NCameraSystem::RadialTangential: {
-      matchStereo<
-          VioKeyframeWindowMatchingAlgorithm<
-              okvis::cameras::PinholeCamera<
-                  okvis::cameras::RadialTangentialDistortion> > >(estimator,
-                                                                  framesInOut);
-      break;
-    }
-    case okvis::cameras::NCameraSystem::Equidistant: {
-      matchStereo<
-          VioKeyframeWindowMatchingAlgorithm<
-              okvis::cameras::PinholeCamera<
-                  okvis::cameras::EquidistantDistortion> > >(estimator,
-                                                             framesInOut);
-      break;
-    }
-    case okvis::cameras::NCameraSystem::RadialTangential8: {
-      matchStereo<
-          VioKeyframeWindowMatchingAlgorithm<
-              okvis::cameras::PinholeCamera<
-                  okvis::cameras::RadialTangentialDistortion8> > >(estimator,
-                                                                   framesInOut);
-      break;
-    }
-    default:
-      OKVIS_THROW(Exception, "Unsupported distortion type.")
-      break;
-  }
+  matchStereo(distortionType, estimator, framesInOut);
   matchStereoTimer.stop();
 
   return true;
@@ -459,6 +372,42 @@ int Frontend::matchToKeyframes(okvis::Estimator& estimator,
   return retCtr;
 }
 
+// Helper to call the right templated version at runtime
+int Frontend::matchToKeyframes(okvis::cameras::NCameraSystem::DistortionType distortionType,
+                     okvis::Estimator& estimator,
+                     const okvis::VioParameters& params,
+                     const uint64_t currentFrameId,
+                     bool& rotationOnly,
+                     bool usePoseUncertainty,
+                     double* uncertainMatchFraction,
+                     bool removeOutliers) {
+  switch (distortionType) {
+    case okvis::cameras::NCameraSystem::RadialTangential:
+      return matchToKeyframes<
+          VioKeyframeWindowMatchingAlgorithm<
+              okvis::cameras::PinholeCamera<
+                  okvis::cameras::RadialTangentialDistortion> > >(
+          estimator, params, currentFrameId, rotationOnly, usePoseUncertainty,
+          uncertainMatchFraction, removeOutliers);
+    case okvis::cameras::NCameraSystem::Equidistant:
+      return matchToKeyframes<
+          VioKeyframeWindowMatchingAlgorithm<
+              okvis::cameras::PinholeCamera<
+                  okvis::cameras::EquidistantDistortion> > >(
+          estimator, params, currentFrameId, rotationOnly, usePoseUncertainty,
+          uncertainMatchFraction, removeOutliers);
+    case okvis::cameras::NCameraSystem::RadialTangential8:
+      return matchToKeyframes<
+          VioKeyframeWindowMatchingAlgorithm<
+              okvis::cameras::PinholeCamera<
+                  okvis::cameras::RadialTangentialDistortion8> > >(
+          estimator, params, currentFrameId, rotationOnly, usePoseUncertainty,
+          uncertainMatchFraction, removeOutliers);
+    default:
+      OKVIS_THROW(Exception, "Unsupported distortion type.")
+  }
+}
+
 // Match a new multiframe to the last frame.
 template<class MATCHING_ALGORITHM>
 int Frontend::matchToLastFrame(okvis::Estimator& estimator,
@@ -517,6 +466,39 @@ int Frontend::matchToLastFrame(okvis::Estimator& estimator,
   return retCtr;
 }
 
+// Helper to call the right templated version at runtime
+int Frontend::matchToLastFrame(okvis::cameras::NCameraSystem::DistortionType distortionType,
+                     okvis::Estimator& estimator,
+                     const okvis::VioParameters& params,
+                     const uint64_t currentFrameId,
+                     bool usePoseUncertainty,
+                     bool removeOutliers) {
+  switch (distortionType) {
+    case okvis::cameras::NCameraSystem::RadialTangential:
+      return matchToLastFrame<
+          VioKeyframeWindowMatchingAlgorithm<
+              okvis::cameras::PinholeCamera<
+                  okvis::cameras::RadialTangentialDistortion> > >(
+          estimator, params, currentFrameId, usePoseUncertainty,
+          removeOutliers);
+    case okvis::cameras::NCameraSystem::Equidistant:
+      return matchToLastFrame<
+          VioKeyframeWindowMatchingAlgorithm<
+              okvis::cameras::PinholeCamera<
+                  okvis::cameras::EquidistantDistortion> > >(
+          estimator, params, currentFrameId, usePoseUncertainty,
+          removeOutliers);
+    case okvis::cameras::NCameraSystem::RadialTangential8:
+      return matchToLastFrame<
+          VioKeyframeWindowMatchingAlgorithm<
+              okvis::cameras::PinholeCamera<
+                  okvis::cameras::RadialTangentialDistortion8> > >(
+          estimator, params, currentFrameId, usePoseUncertainty,
+          removeOutliers);
+    default: OKVIS_THROW(Exception, "Unsupported distortion type.")
+  }
+}
+
 // Match the frames inside the multiframe to each other to initialise new landmarks.
 template<class MATCHING_ALGORITHM>
 void Frontend::matchStereo(okvis::Estimator& estimator,
@@ -568,6 +550,35 @@ void Frontend::matchStereo(okvis::Estimator& estimator,
       }
       multiFrame->setLandmarkId(im, k, okvis::IdProvider::instance().newId());
     }
+  }
+}
+
+// Helper to call the right templated version at runtime
+void Frontend::matchStereo(
+    okvis::cameras::NCameraSystem::DistortionType distortionType,
+    okvis::Estimator& estimator,
+    std::shared_ptr<okvis::MultiFrame> multiFrame) {
+  switch (distortionType) {
+    case okvis::cameras::NCameraSystem::RadialTangential:
+      return matchStereo<
+          VioKeyframeWindowMatchingAlgorithm<
+              okvis::cameras::PinholeCamera<
+                  okvis::cameras::RadialTangentialDistortion> > >(estimator,
+                                                                  multiFrame);
+    case okvis::cameras::NCameraSystem::Equidistant:
+      return matchStereo<
+          VioKeyframeWindowMatchingAlgorithm<
+              okvis::cameras::PinholeCamera<
+                  okvis::cameras::EquidistantDistortion> > >(estimator,
+                                                             multiFrame);
+    case okvis::cameras::NCameraSystem::RadialTangential8:
+      return matchStereo<
+          VioKeyframeWindowMatchingAlgorithm<
+              okvis::cameras::PinholeCamera<
+                  okvis::cameras::RadialTangentialDistortion8> > >(estimator,
+                                                                   multiFrame);
+    default:
+      OKVIS_THROW(Exception, "Unsupported distortion type.")
   }
 }
 
