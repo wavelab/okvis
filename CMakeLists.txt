@@ -42,6 +42,12 @@ foreach(p LIB BIN INCLUDE CMAKE)
   endif()
 endforeach()
 
+if(POLICY CMP0060)
+  # Link libraries by full path even in implicit directories.
+  # Helps with cross-compile build
+  cmake_policy(SET CMP0060 NEW)
+endif()
+
 # make sure we use Release and warn otherwise
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
