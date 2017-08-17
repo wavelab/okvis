@@ -521,8 +521,13 @@ void ThreadedKFVio::matchingLoop() {
       frontend_.dataAssociationAndInitialization(estimator_, T_WS, parameters_,
                                                  map_, frame, &asKeyframe);
       matchingTimer.stop();
-      if (asKeyframe)
+      if (asKeyframe) {
+        if(!frontend_.isInitialized() && estimator_.numFrames() > 1) {
+          LOG(WARNING) << "New keyframe while uninitialized. Replacing the first keyframe.";
+          estimator_.setKeyframe(estimator_.currentKeyframeId(), false);
+        }
         estimator_.setKeyframe(frame->id(), asKeyframe);
+      }
       if(!blocking_) {
         double timeLimit = parameters_.optimization.timeLimitForMatchingAndOptimization
                            -(okvis::Time::now()-t0Matching).toSec();

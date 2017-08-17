@@ -214,9 +214,6 @@ bool Frontend::doWeNeedANewKeyframe(
     return true;
   }
 
-  if (!isInitialized_)
-    return false;
-
   double overlap = 0.0;
   double ratio = 0.0;
 
