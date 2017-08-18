@@ -270,6 +270,9 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
   parseBoolean(file["publishing_options"]["publishLandmarks"],
                    vioParameters_.publishing.publishLandmarks);
 
+  parseBoolean(file["publishing_options"]["publishImages"],
+               vioParameters_.publishing.publishImages);
+
   cv::FileNode T_Wc_W_ = file["publishing_options"]["T_Wc_W"];
   if(T_Wc_W_.isSeq()) {
     Eigen::Matrix4d T_Wc_W_e;

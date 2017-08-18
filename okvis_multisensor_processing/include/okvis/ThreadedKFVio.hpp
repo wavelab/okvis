@@ -232,9 +232,6 @@ class ThreadedKFVio : public VioInterface {
 
   /// \}
 
-  /// \brief Trigger display (needed because OSX won't allow threaded display).
-  void display();
-
  private:
   /// \brief Start all threads.
   virtual void startThreads();
@@ -370,8 +367,6 @@ class ThreadedKFVio : public VioInterface {
   okvis::threadsafe::ThreadSafeQueue<OptimizationResults> optimizationResults_;
   /// The queue containing visualization data that is ready to be displayed.
   okvis::threadsafe::ThreadSafeQueue<VioVisualizer::VisualizationData::Ptr> visualizationData_;
-  /// The queue containing the actual display images
-  okvis::threadsafe::ThreadSafeQueue<std::vector<cv::Mat>> displayImages_;
 
   /// @}
   /// @name Mutexes

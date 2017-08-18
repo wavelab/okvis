@@ -268,6 +268,7 @@ struct PublishingParameters {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   int publishRate = 200;  ///< Maximum publishing rate. [Hz]
   bool publishLandmarks = true; ///< Select, if you want to publish landmarks at all.
+  bool publishImages = true; ///< If displayImages is true, publish the images instead of displaying in a window
   float landmarkQualityThreshold = 1.0e-5; ///< Quality threshold under which landmarks are not published. Between 0 and 1.
   float maxLandmarkQuality = 0.05; ///< Quality above which landmarks are assumed to be of the best quality. Between 0 and 1.
   size_t maxPathLength = 100 ; ///< Maximum length of ros::nav_mgsgs::Path to be published.

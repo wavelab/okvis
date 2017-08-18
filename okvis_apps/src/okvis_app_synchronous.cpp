@@ -58,6 +58,7 @@
 #pragma GCC diagnostic pop
 #include <okvis/VioParametersReader.hpp>
 #include <okvis/ThreadedKFVio.hpp>
+#include <okvis/ImageViewer.hpp>
 
 #include <boost/filesystem.hpp>
 
@@ -223,10 +224,15 @@ int main(int argc, char **argv)
   okvis::ThreadedKFVio okvis_estimator(parameters);
 
   PoseViewer poseViewer;
+  okvis::ImageViewer imageViewer(parameters);
+
   okvis_estimator.setFullStateCallback(
       std::bind(&PoseViewer::publishFullStateAsCallback, &poseViewer,
                 std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4));
+  okvis_estimator.setDisplayCallback(
+      std::bind(&okvis::ImageViewer::saveImagesAsCallback, &imageViewer,
+                std::placeholders::_1));
 
   okvis_estimator.setBlocking(true);
 
@@ -292,7 +298,7 @@ int main(int argc, char **argv)
   int counter = 0;
   okvis::Time start(0.0);
   while (true) {
-    okvis_estimator.display();
+    imageViewer.display();
     poseViewer.display();
 
     // check if at the end

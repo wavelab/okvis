@@ -110,16 +110,7 @@ void ThreadedKFVio::init() {
           std::shared_ptr<threadsafe::ThreadSafeQueue<std::shared_ptr<okvis::CameraMeasurement> > >
           (new threadsafe::ThreadSafeQueue<std::shared_ptr<okvis::CameraMeasurement> >()));
   }
-  
-  // set up windows so things don't crash on Mac OS
-  if(parameters_.visualization.displayImages){
-    for (size_t im = 0; im < parameters_.nCameraSystem.numCameras(); im++) {
-      std::stringstream windowname;
-      windowname << "OKVIS camera " << im;
-  	  cv::namedWindow(windowname.str());
-    }
-  }
-  
+
   startThreads();
 }
 
@@ -644,24 +635,10 @@ void ThreadedKFVio::visualizationLoop() {
     for (size_t i = 0; i < parameters_.nCameraSystem.numCameras(); ++i) {
       out_images[i] = visualizer_.drawMatches(new_data, i);
     }
-	displayImages_.PushNonBlockingDroppingIfFull(out_images,1);
+    if (displayCallback_) {
+        displayCallback_(out_images);
+    }
   }
-}
-
-// trigger display (needed because OSX won't allow threaded display)
-void ThreadedKFVio::display() {
-  std::vector<cv::Mat> out_images;
-  if (displayImages_.Size() == 0)
-	return;
-  if (displayImages_.PopBlocking(&out_images) == false)
-    return;
-  // draw
-  for (size_t im = 0; im < parameters_.nCameraSystem.numCameras(); im++) {
-    std::stringstream windowname;
-    windowname << "OKVIS camera " << im;
-    cv::imshow(windowname.str(), out_images[im]);
-  }
-  cv::waitKey(1);
 }
 
 // Get a subset of the recorded IMU measurements.

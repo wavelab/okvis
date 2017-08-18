@@ -99,6 +99,11 @@ void VioInterface::setLandmarksCallback(
   landmarksCallback_ = landmarksCallback;
 }
 
+// Set the callback to be called every time images are ready for display
+void VioInterface::setDisplayCallback(const DisplayCallback & displayCallback) {
+  displayCallback_ = displayCallback;
+}
+
 // Set the blocking variable that indicates whether the addMeasurement() functions
 // should return immediately (blocking=false), or only when the processing is complete.
 void VioInterface::setBlocking(bool blocking) {

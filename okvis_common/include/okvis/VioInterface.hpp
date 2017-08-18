@@ -85,6 +85,7 @@ class VioInterface {
   typedef std::function<
       void(const okvis::Time &, const okvis::MapPointVector &,
            const okvis::MapPointVector &)> LandmarksCallback;
+  typedef std::function<void(const std::vector<cv::Mat> &)> DisplayCallback;
 
   VioInterface();
   virtual ~VioInterface();
@@ -289,6 +290,12 @@ class VioInterface {
   virtual void setLandmarksCallback(
       const LandmarksCallback & landmarksCallback);
 
+  /// \brief Set the callback to be called every time images are ready for display
+  ///        When an implementing class has an estimate, they can call:
+  ///        displayCallback_( imagesVector );
+  ///        where imagesVector contains a cv::Mat for each camera
+  virtual void setDisplayCallback(const DisplayCallback & displayCallback);
+
   /**
    * \brief Set the blocking variable that indicates whether the addMeasurement() functions
    *        should return immediately (blocking=false), or only when the processing is complete.
@@ -312,6 +319,7 @@ class VioInterface {
   FullStateCallback fullStateCallback_; ///< Full state callback function.
   FullStateCallbackWithExtrinsics fullStateCallbackWithExtrinsics_; ///< Full state and extrinsics callback function.
   LandmarksCallback landmarksCallback_; ///< Landmarks callback function.
+  DisplayCallback displayCallback_; ///< Display callback function.
   std::shared_ptr<std::fstream> csvImuFile_;  ///< IMU CSV file.
   std::shared_ptr<std::fstream> csvPosFile_;  ///< Position CSV File.
   std::shared_ptr<std::fstream> csvMagFile_;  ///< Magnetometer CSV File
