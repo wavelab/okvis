@@ -117,6 +117,9 @@ if(${USE_SYSTEM_BRISK})
   find_package( brisk 2 REQUIRED )
   include_directories(BEFORE ${BRISK_INCLUDE_DIRS})
   message(STATUS "Using system brisk. Found at ${BRISK_INCLUDE_DIRS}.")
+
+  # This should be in brisk's briskConfig.cmake - include here as a workaround
+  find_package(OpenCV REQUIRED)
 else()
   ExternalProject_Add(brisk_external
     URL "https://www.doc.ic.ac.uk/~sleutene/software/brisk-2.0.3.zip"    
@@ -150,6 +153,7 @@ endif()
 # ceres
 find_package(SuiteSparse REQUIRED QUIET) #will be needed in any case...
 find_package(CXSparse QUIET) #optional
+set(CERES_LIBRARIES ceres ${SUITESPARSE_LIBRARIES} ${CXSPARSE_LIBRARIES} ${Eigen_LIBS} ${GLOG_LIBRARY}) #ceres won't export these
 if(${USE_SYSTEM_CERES})
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
   find_package( Ceres 1.9 REQUIRED )
@@ -198,16 +202,7 @@ else()
     set_property(TARGET ceres PROPERTY IMPORTED_LOCATION
                ${CMAKE_BINARY_DIR}/${CERES_LIB_PREFIX}/libceres.a )
   endif ()
-   
-  find_package(OpenMP QUIET)
-  if (OPENMP_FOUND)
-    message(STATUS "OpenMP found")
-    add_definitions(-DUSE_OPENMP)
-    set(CERES_LIBRARIES ceres gomp ${SUITESPARSE_LIBRARIES} ${CXSPARSE_LIBRARIES} ${Eigen_LIBS} ${GLOG_LIBRARY}) #ceres won't export these
-  else ()
-    message(STATUS "OpenMP NOT found")
-    set(CERES_LIBRARIES ceres ${SUITESPARSE_LIBRARIES} ${CXSPARSE_LIBRARIES}  ${Eigen_LIBS} ${GLOG_LIBRARY}) #ceres won't export these
-  endif ()
+
   add_dependencies(${CERES_LIBRARIES} ceres_external)
 
   # install it once built
@@ -218,6 +213,19 @@ else()
   install(DIRECTORY ${CMAKE_BINARY_DIR}/share/Ceres/
     DESTINATION ${CMAKE_INSTALL_PREFIX}/share/Ceres/)
 endif()
+
+find_package(OpenMP QUIET)
+if (OPENMP_FOUND)
+  message(STATUS "OpenMP found")
+  add_definitions(-DUSE_OPENMP)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPENMP_CXX_FLAGS}")
+  if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    list(APPEND CERES_LIBRARIES gomp)
+  endif()
+else ()
+  message(STATUS "OpenMP NOT found")
+endif ()
+
 
 # OpenGV
 if(${USE_SYSTEM_OPENGV})
