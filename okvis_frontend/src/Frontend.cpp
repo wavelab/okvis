@@ -403,6 +403,7 @@ int Frontend::matchToKeyframes(okvis::cameras::NCameraSystem::DistortionType dis
     default:
       OKVIS_THROW(Exception, "Unsupported distortion type.")
   }
+  return 0;  // never reached - here to avoid a warning
 }
 
 // Match a new multiframe to the last frame.
@@ -494,6 +495,7 @@ int Frontend::matchToLastFrame(okvis::cameras::NCameraSystem::DistortionType dis
           removeOutliers);
     default: OKVIS_THROW(Exception, "Unsupported distortion type.")
   }
+  return 0;  // never reached - here to avoid a warning
 }
 
 // Match the frames inside the multiframe to each other to initialise new landmarks.
