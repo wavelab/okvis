@@ -96,8 +96,8 @@ cv::Mat VioVisualizer::drawMatches(VisualizationData::Ptr& data,
   // the keyframe trafo
   Eigen::Vector2d keypoint;
   Eigen::Vector4d landmark;
-  okvis::kinematics::Transformation lastKeyframeT_CW = parameters_.nCameraSystem
-      .T_SC(image_number)->inverse() * data->T_WS_keyFrame.inverse();
+  const auto lastKeyFrameT_CS = data->keyFrames->T_SC(image_number)->inverse();
+  okvis::kinematics::Transformation lastKeyframeT_CW = lastKeyFrameT_CS * data->T_WS_keyFrame.inverse();
 
   // find distortion type
   okvis::cameras::NCameraSystem::DistortionType distortionType = parameters_.nCameraSystem

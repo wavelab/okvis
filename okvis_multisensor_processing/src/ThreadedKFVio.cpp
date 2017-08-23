@@ -638,8 +638,8 @@ void ThreadedKFVio::visualizationLoop() {
     if (visualizationData_.PopBlocking(&new_data) == false)
       return;
     //visualizer_.showDebugImages(new_data);
-    std::vector<cv::Mat> out_images(parameters_.nCameraSystem.numCameras());
-    for (size_t i = 0; i < parameters_.nCameraSystem.numCameras(); ++i) {
+    std::vector<cv::Mat> out_images(numCameras_);
+    for (size_t i = 0; i < numCameras_; ++i) {
       out_images[i] = visualizer_.drawMatches(new_data, i);
     }
     if (displayCallback_) {
