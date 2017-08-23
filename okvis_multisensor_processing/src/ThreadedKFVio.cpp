@@ -198,6 +198,7 @@ bool ThreadedKFVio::addImage(const okvis::Time & stamp, size_t cameraIndex,
   std::shared_ptr<okvis::CameraMeasurement> frame = std::make_shared<
       okvis::CameraMeasurement>();
   frame->measurement.image = image;
+  frame->measurement.T_SC = parameters_.nCameraSystem.T_SC(cameraIndex);
   frame->timeStamp = stamp;
   frame->sensorId = cameraIndex;
 
@@ -410,7 +411,7 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
       propagationTimer.stop();
     }
     okvis::kinematics::Transformation T_WC = T_WS
-        * (*parameters_.nCameraSystem.T_SC(frame->sensorId));
+        * (*frame->measurement.T_SC);
     beforeDetectTimer.stop();
     detectTimer.start();
     frontend_.detectAndDescribe(frame->sensorId, multiFrame, T_WC, nullptr);
