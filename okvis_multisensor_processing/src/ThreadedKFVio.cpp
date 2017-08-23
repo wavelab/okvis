@@ -100,6 +100,7 @@ void ThreadedKFVio::init() {
 
   lastOptimizedStateTimestamp_ = okvis::Time(0.0) + temporal_imu_data_overlap;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
   lastAddedStateTimestamp_ = okvis::Time(0.0) + temporal_imu_data_overlap;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
+  lastOptimizedCameraSystem_ = parameters_.nCameraSystem;
 
   estimator_.addImu(parameters_.imu);
   for (size_t i = 0; i < numCameras_; ++i) {
@@ -586,10 +587,14 @@ void ThreadedKFVio::imuConsumerLoop() {
       result.speedAndBiases = speedAndBiases_propagated_;
       result.omega_S = imuMeasurements_.back().measurement.gyroscopes
           - speedAndBiases_propagated_.segment<3>(3);
-      for (size_t i = 0; i < parameters_.nCameraSystem.numCameras(); ++i) {
+
+      // Use the last-optimized camera extrinsics
+      std::lock_guard<std::mutex> lock(lastState_mutex_);
+      const auto& cameraSystem = lastOptimizedCameraSystem_;
+      for (size_t i = 0; i < numCameras_; ++i) {
         result.vector_of_T_SCi.push_back(
             okvis::kinematics::Transformation(
-                *parameters_.nCameraSystem.T_SC(i)));
+                *cameraSystem.T_SC(i)));
       }
       result.onlyPublishLandmarks = false;
       optimizationResults_.PushNonBlockingDroppingIfFull(result,1);
@@ -763,6 +768,7 @@ void ThreadedKFVio::optimizationLoop() {
         estimator_.getSpeedAndBias(frame_pairs->id(), 0,
                                    lastOptimizedSpeedAndBiases_);
         lastOptimizedStateTimestamp_ = frame_pairs->timestamp();
+        lastOptimizedCameraSystem_ = frame_pairs->getCameraSystem();
 
         // if we publish the state after each IMU propagation we do not need to publish it here.
         if (!parameters_.publishing.publishImuPropagatedState) {
@@ -821,10 +827,11 @@ void ThreadedKFVio::optimizationLoop() {
 
     if (!parameters_.publishing.publishImuPropagatedState) {
       // adding further elements to result that do not access estimator.
-      for (size_t i = 0; i < parameters_.nCameraSystem.numCameras(); ++i) {
+      const auto& cameraSystem = frame_pairs->getCameraSystem();
+      for (size_t i = 0; i < numCameras_; ++i) {
         result.vector_of_T_SCi.push_back(
             okvis::kinematics::Transformation(
-                *parameters_.nCameraSystem.T_SC(i)));
+                *cameraSystem.T_SC(i)));
       }
     }
     optimizationResults_.Push(result);
@@ -834,6 +841,7 @@ void ThreadedKFVio::optimizationLoop() {
       visualizationDataPtr->currentFrames = frame_pairs;
       visualizationData_.PushNonBlockingDroppingIfFull(visualizationDataPtr, 1);
     }
+
     afterOptimizationTimer.stop();
   }
 }

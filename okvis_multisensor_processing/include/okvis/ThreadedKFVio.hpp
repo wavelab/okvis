@@ -324,6 +324,9 @@ class ThreadedKFVio : public VioInterface {
   /// \brief Timestamp of newest frame used in the last optimization.
   /// \warning Lock lastState_mutex_.
   okvis::Time lastOptimizedStateTimestamp_;
+  /// \brief The camera system (including T_SC) used in the last optimization
+  /// \warning Lock lastState_mutex_.
+  okvis::cameras::NCameraSystem lastOptimizedCameraSystem_;
   /// This is set to true after optimization to signal the IMU consumer loop to repropagate
   /// the state from the lastOptimizedStateTimestamp_.
   std::atomic_bool repropagationNeeded_;

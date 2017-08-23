@@ -56,6 +56,11 @@ MultiFrame::~MultiFrame()
 
 }
 
+// Obtain the NCameraSystem
+const cameras::NCameraSystem & MultiFrame::getCameraSystem() const {
+  return cameraSystem_;
+}
+
 // (Re)set the NCameraSystem -- which clears the frames as well.
 void MultiFrame::resetCameraSystemAndFrames(
     const cameras::NCameraSystem & cameraSystem)

@@ -71,6 +71,9 @@ class MultiFrame
   /// \brief Destructor...
   inline virtual ~MultiFrame();
 
+  // \brief Obtain the NCameraSystem
+  inline const cameras::NCameraSystem & getCameraSystem() const;
+
   /// \brief (Re)set the NCameraSystem -- which clears the frames as well.
   /// @param[in] cameraSystem The camera system for which this is a multi-frame.
   inline void resetCameraSystemAndFrames(
