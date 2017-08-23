@@ -124,6 +124,11 @@ std::shared_ptr<const okvis::kinematics::Transformation> NCameraSystem::T_SC(
   return T_SC_[cameraIndex];
 }
 
+void NCameraSystem::setT_SC(size_t cameraIndex,
+                            std::shared_ptr<const okvis::kinematics::Transformation> T_SC) {
+  T_SC_[cameraIndex] = T_SC;
+}
+
 //get the camera geometry of camera cameraIndex
 std::shared_ptr<const cameras::CameraBase> NCameraSystem::cameraGeometry(
     size_t cameraIndex) const

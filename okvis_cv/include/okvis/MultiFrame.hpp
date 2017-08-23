@@ -111,6 +111,11 @@ class MultiFrame
   /// @param[in] image The image.
   inline void setImage(size_t cameraIdx, const cv::Mat & image);
 
+  /// \brief Set the camera extrinsics
+  /// @param[in] cameraIdx The camera index that took the image.
+  /// @param[in] T_SC The extrinsics.
+  inline void setT_SC(size_t cameraIdx, std::shared_ptr<const okvis::kinematics::Transformation> T_SC);
+
   /// \brief Set the geometry
   /// @param[in] cameraIdx The camera index.
   /// @param[in] cameraGeometry The camera geometry.

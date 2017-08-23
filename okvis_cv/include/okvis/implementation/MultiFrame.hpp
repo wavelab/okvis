@@ -116,6 +116,12 @@ void MultiFrame::setImage(size_t cameraIdx, const cv::Mat & image)
   frames_[cameraIdx].setImage(image);
 }
 
+// Set the camera extrinsics
+void MultiFrame::setT_SC(size_t cameraIdx, std::shared_ptr<const okvis::kinematics::Transformation> T_SC) {
+  OKVIS_ASSERT_TRUE_DBG(Exception, cameraIdx < frames_.size(), "Out of range");
+  cameraSystem_.setT_SC(cameraIdx, T_SC);
+}
+
 // Set the geometry
 void MultiFrame::setGeometry(
     size_t cameraIdx, std::shared_ptr<const cameras::CameraBase> cameraGeometry)

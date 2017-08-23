@@ -93,11 +93,14 @@ std::shared_ptr<okvis::MultiFrame> FrameSynchronizer::addNewFrame(std::shared_pt
       multiFrame->setTimestamp(frame_stamp);
     }
     multiFrame->setImage(frame->sensorId,frame->measurement.image);
+    multiFrame->setT_SC(frame->sensorId, frame->measurement.T_SC);
   }
   else {
     multiFrame = std::shared_ptr<okvis::MultiFrame>(new okvis::MultiFrame(parameters_.nCameraSystem,frame_stamp,
                                                                           okvis::IdProvider::instance().newId()));
     multiFrame->setImage(frame->sensorId,frame->measurement.image);
+    multiFrame->setT_SC(frame->sensorId, frame->measurement.T_SC);
+
     bufferPosition_ = (bufferPosition_+1) % max_frame_sync_buffer_size;
     if(frameBuffer_[bufferPosition_].first != nullptr
        && frameBuffer_[bufferPosition_].second != numCameras_) {

@@ -119,6 +119,12 @@ class NCameraSystem
   /// @return T_SC, the extrinsics.
   inline std::shared_ptr<const okvis::kinematics::Transformation> T_SC(size_t cameraIndex) const;
 
+  /// \brief set the pose of the IMU frame S with respect to the camera cameraIndex
+  /// @param[in] cameraIndex The camera index for which the extrinsics should be returned.
+  /// @return T_SC, the extrinsics.
+  /// @todo Re-calculate overlap
+  inline void setT_SC(size_t cameraIndex, std::shared_ptr<const okvis::kinematics::Transformation> T_SC);
+
   /// \brief get the camera geometry of camera cameraIndex
   /// @param[in] cameraIndex The camera index for which the camera geometry should be returned.
   /// @return The camera geometry.
