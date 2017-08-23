@@ -131,6 +131,7 @@ class VioInterface {
    * \param stamp        The image timestamp.
    * \param cameraIndex  The index of the camera that the image originates from.
    * \param image        The image.
+   * \param T_SC         The extrinsics of the camera at the time of the image
    * \param keypoints    Optionally aready pass keypoints. This will skip the detection part.
    * \param asKeyframe   Use the new image as keyframe. Not implemented.
    * \warning The frame consumer loop does not support using existing keypoints yet.
@@ -139,6 +140,7 @@ class VioInterface {
    */
   virtual bool addImage(const okvis::Time & stamp, size_t cameraIndex,
                         const cv::Mat & image,
+                        const std::shared_ptr<const okvis::kinematics::Transformation> & T_SC = nullptr,
                         const std::vector<cv::KeyPoint> * keypoints = 0,
                         bool* asKeyframe = 0) = 0;
 
