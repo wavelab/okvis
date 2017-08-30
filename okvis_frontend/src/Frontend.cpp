@@ -175,10 +175,12 @@ bool Frontend::dataAssociationAndInitialization(
   } else
     *asKeyframe = true;  // first frame needs to be keyframe
 
-  // do stereo match to get new landmarks
-  TimerSwitchable matchStereoTimer("2.4.3 matchStereo");
-  matchStereo(distortionType, estimator, framesInOut);
-  matchStereoTimer.stop();
+  if (params.optimization.doStereoMatch) {
+    // do stereo match to get new landmarks
+    TimerSwitchable matchStereoTimer("2.4.3 matchStereo");
+    matchStereo(distortionType, estimator, framesInOut);
+    matchStereoTimer.stop();
+  }
 
   return true;
 }

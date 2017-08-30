@@ -100,6 +100,11 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
         << "numImuFrames parameter not provided. Setting to default numImuFrames=2.";
     vioParameters_.optimization.numImuFrames = 2;
   }
+  // Perform left-right matching
+  if (!parseBoolean(file["doStereoMatch"], vioParameters_.optimization.doStereoMatch)) {
+    LOG(WARNING) << "doStereoMatch parameter not provided. Setting to default doStereoMatch=true.";
+    vioParameters_.optimization.doStereoMatch = true;
+  }
   // minimum ceres iterations
   if (file["ceres_options"]["minIterations"].isInt()) {
     file["ceres_options"]["minIterations"]

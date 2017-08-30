@@ -244,6 +244,7 @@ struct Optimization{
   int maxNoKeypoints;       ///< Restrict to a maximum of this many keypoints per image (strongest ones).
   int numKeyframes; ///< Number of keyframes.
   int numImuFrames; ///< Number of IMU frames.
+  bool doStereoMatch; ///< Perform left-right stereo matching?
 };
 
 /**

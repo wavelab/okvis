@@ -54,6 +54,7 @@ imu_params:
 # Estimator parameters
 numKeyframes: 5 # number of keyframes in optimisation window
 numImuFrames: 3 # number of frames linked by most recent nonlinear IMU error terms
+doStereoMatch: true # enable matching between cameras
 
 # ceres optimization options
 ceres_options:
