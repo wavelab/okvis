@@ -214,19 +214,6 @@ else()
     DESTINATION ${CMAKE_INSTALL_PREFIX}/share/Ceres/)
 endif()
 
-find_package(OpenMP QUIET)
-if (OPENMP_FOUND)
-  message(STATUS "OpenMP found")
-  add_definitions(-DUSE_OPENMP)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    list(APPEND CERES_LIBRARIES gomp)
-  endif()
-else ()
-  message(STATUS "OpenMP NOT found")
-endif ()
-
-
 # OpenGV
 if(${USE_SYSTEM_OPENGV})
   # okvis requires an older version of opengv (see git tag below) which doesn't

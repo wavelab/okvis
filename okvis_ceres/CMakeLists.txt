@@ -4,7 +4,19 @@ project(okvis_ceres)
 # require Eigen
 find_package( Eigen REQUIRED )
 include_directories(${EIGEN_INCLUDE_DIR}) 
-               
+
+# Find OpenMP, assuming ceres was compiled with it if found
+# Todo: use modern CMake to get this from ceres config
+find_package(OpenMP QUIET)
+if (OPENMP_FOUND)
+  message(STATUS "OpenMP found")
+  if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    list(APPEND CERES_LIBRARIES gomp)
+  endif()
+else ()
+  message(STATUS "OpenMP NOT found")
+endif ()
+
 # build the library 
 add_library(${PROJECT_NAME} 
   src/PoseParameterBlock.cpp
@@ -34,6 +46,15 @@ target_link_libraries(${PROJECT_NAME}
   PRIVATE ${CERES_LIBRARIES} 
   PRIVATE ${OpenCV_LIBRARIES} 
 )
+
+if (OPENMP_FOUND)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE "-DUSE_OPENMP")
+  # Add openmp options so that dependent projects (e.g. okvis_ros) will automatically import them
+  # Todo: in modern CMake, get these from ceres without redefining here
+  target_compile_options(${PROJECT_NAME} PUBLIC "${OpenMP_CXX_FLAGS}")
+  target_link_libraries(${PROJECT_NAME} PUBLIC "${OpenMP_CXX_FLAGS}")  # need to pass to linker as well
+endif ()
+
 
 # installation if required
 install(TARGETS ${PROJECT_NAME}
