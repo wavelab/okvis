@@ -864,6 +864,7 @@ void Estimator::optimize(size_t numIter, size_t /*numThreads*/,
   //mapPtr_->options.jacobi_scaling = false;
 #ifdef USE_OPENMP
     mapPtr_->options.num_threads = numThreads;
+    mapPtr_->options.num_linear_solver_threads = numThreads;
 #endif
   mapPtr_->options.max_num_iterations = numIter;
 
