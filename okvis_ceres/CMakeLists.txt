@@ -75,6 +75,7 @@ if(BUILD_TESTS)
   add_executable(${PROJECT_TEST_NAME}
     test/test_main.cpp
     test/TestEstimator.cpp
+    test/TestEstimatorDynamicCamera.cpp
     test/TestHomogeneousPointError.cpp
     test/TestReprojectionError.cpp
     test/TestImuError.cpp
