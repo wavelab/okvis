@@ -33,6 +33,7 @@
 #include "glog/logging.h"
 #include "ceres/ceres.h"
 #include <gtest/gtest.h>
+#include "SyntheticMotion.hpp"
 #include <okvis/ceres/ImuError.hpp>
 #include <okvis/ceres/PoseError.hpp>
 #include <okvis/ceres/SpeedAndBiasError.hpp>
@@ -45,21 +46,6 @@
 #include <okvis/Time.hpp>
 #include <okvis/FrameTypedefs.hpp>
 #include <okvis/assert_macros.hpp>
-
-double sinc_test(double x){
-	if(fabs(x)>1e-10) {
-		return sin(x)/x;
-	}
-	else{
-		static const double c_2=1.0/6.0;
-		static const double c_4=1.0/120.0;
-		static const double c_6=1.0/5040.0;
-		const double x_2 = x*x;
-		const double x_4 = x_2*x_2;
-		const double x_6 = x_2*x_2*x_2;
-		return 1.0 - c_2*x_2 + c_4*x_4 - c_6*x_6;
-	}
-}
 
 const double jacobianTolerance = 1.0e-3;
 
@@ -87,103 +73,17 @@ TEST(okvisTestSuite, ImuError){
 	imuParameters.tau = 3600.0;
 
 	// generate random motion
-	const double w_omega_S_x = Eigen::internal::random(0.1,10.0); // circular frequency
-	const double w_omega_S_y = Eigen::internal::random(0.1,10.0); // circular frequency
-	const double w_omega_S_z = Eigen::internal::random(0.1,10.0); // circular frequency
-	const double p_omega_S_x = Eigen::internal::random(0.0,M_PI); // phase
-	const double p_omega_S_y = Eigen::internal::random(0.0,M_PI); // phase
-	const double p_omega_S_z = Eigen::internal::random(0.0,M_PI); // phase
-	const double m_omega_S_x = Eigen::internal::random(0.1,1.0); // magnitude
-	const double m_omega_S_y = Eigen::internal::random(0.1,1.0); // magnitude
-	const double m_omega_S_z = Eigen::internal::random(0.1,1.0); // magnitude
-	const double w_a_W_x = Eigen::internal::random(0.1,10.0);
-	const double w_a_W_y = Eigen::internal::random(0.1,10.0);
-	const double w_a_W_z = Eigen::internal::random(0.1,10.0);
-	const double p_a_W_x = Eigen::internal::random(0.1,M_PI);
-	const double p_a_W_y = Eigen::internal::random(0.1,M_PI);
-	const double p_a_W_z = Eigen::internal::random(0.1,M_PI);
-	const double m_a_W_x = Eigen::internal::random(0.1,10.0);
-	const double m_a_W_y = Eigen::internal::random(0.1,10.0);
-	const double m_a_W_z = Eigen::internal::random(0.1,10.0);
-
-	// generate randomized measurements - duration 10 seconds
-	const double duration = 1.0;
-	okvis::ImuMeasurementDeque imuMeasurements;
-	okvis::kinematics::Transformation T_WS;
-	//T_WS.setRandom();
-
-	// time increment
-	const double dt=1.0/double(imuParameters.rate); // time discretization
-
-	// states
-	Eigen::Quaterniond q=T_WS.q();
-	Eigen::Vector3d r=T_WS.r();
-	okvis::SpeedAndBias speedAndBias;
-	speedAndBias.setZero();
-	Eigen::Vector3d v=speedAndBias.head<3>();
+	auto motion = generateMotion(imuParameters);
 
 	// start
-	okvis::kinematics::Transformation T_WS_0;
-	okvis::SpeedAndBias speedAndBias_0;
-	okvis::Time t_0;
+	okvis::kinematics::Transformation T_WS_0 = motion.T_WSs.front();
+	okvis::SpeedAndBias speedAndBias_0 = motion.speedAndBiases.front();
+	okvis::Time t_0 = motion.times.front();
 
 	// end
-	okvis::kinematics::Transformation T_WS_1;
-	okvis::SpeedAndBias speedAndBias_1;
-	okvis::Time t_1;
-
-	for(size_t i=0; i<size_t(duration*imuParameters.rate); ++i){
-	  double time = double(i)/imuParameters.rate;
-	  if (i==10){ // set this as starting pose
-		  T_WS_0 = T_WS;
-		  speedAndBias_0=speedAndBias;
-		  t_0=okvis::Time(time);
-	  }
-	  if (i==size_t(duration*imuParameters.rate)-10){ // set this as starting pose
-		  T_WS_1 = T_WS;
-		  speedAndBias_1=speedAndBias;
-		  t_1=okvis::Time(time);
-	  }
-
-	  Eigen::Vector3d omega_S(m_omega_S_x*sin(w_omega_S_x*time+p_omega_S_x),
-			  m_omega_S_y*sin(w_omega_S_y*time+p_omega_S_y),
-			  m_omega_S_z*sin(w_omega_S_z*time+p_omega_S_z));
-	  Eigen::Vector3d a_W(m_a_W_x*sin(w_a_W_x*time+p_a_W_x),
-				  m_a_W_y*sin(w_a_W_y*time+p_a_W_y),
-				  m_a_W_z*sin(w_a_W_z*time+p_a_W_z));
-
-	  //omega_S.setZero();
-	  //a_W.setZero();
-
-	  Eigen::Quaterniond dq;
-
-	  // propagate orientation
-	  const double theta_half = omega_S.norm()*dt*0.5;
-	  const double sinc_theta_half = sinc_test(theta_half);
-	  const double cos_theta_half = cos(theta_half);
-	  dq.vec()=sinc_theta_half*0.5*dt*omega_S;
-	  dq.w()=cos_theta_half;
-	  q = q * dq;
-
-	  // propagate speed
-	  v+=dt*a_W;
-
-	  // propagate position
-	  r+=dt*v;
-
-	  // T_WS
-	  T_WS = okvis::kinematics::Transformation(r,q);
-
-	  // speedAndBias - v only, obviously, since this is the Ground Truth
-	  speedAndBias.head<3>()=v;
-
-	  // generate measurements
-	  Eigen::Vector3d gyr = omega_S + imuParameters.sigma_g_c/sqrt(dt)
-			  *Eigen::Vector3d::Random();
-	  Eigen::Vector3d acc = T_WS.inverse().C()*(a_W+Eigen::Vector3d(0,0,imuParameters.g)) + imuParameters.sigma_a_c/sqrt(dt)
-				*Eigen::Vector3d::Random();
-	  imuMeasurements.push_back(okvis::ImuMeasurement(okvis::Time(time),okvis::ImuSensorReadings(gyr,acc)));
-	}
+	okvis::kinematics::Transformation T_WS_1 = motion.T_WSs.back();
+	okvis::SpeedAndBias speedAndBias_1 = motion.speedAndBiases.back();
+	okvis::Time t_1 = motion.times.back();
 
 	// create the pose parameter blocks
 	okvis::kinematics::Transformation T_disturb;
@@ -210,7 +110,7 @@ TEST(okvisTestSuite, ImuError){
 	std::cout<<" [ OK ] "<<std::endl;
 
 	// create the Imu error term
-	okvis::ceres::ImuError* cost_function_imu = new okvis::ceres::ImuError(imuMeasurements, imuParameters,t_0, t_1);
+	okvis::ceres::ImuError* cost_function_imu = new okvis::ceres::ImuError(motion.imuMeasurements, imuParameters,t_0, t_1);
 	problem.AddResidualBlock(cost_function_imu, NULL,
 		  poseParameterBlock_0.parameters(), speedAndBiasParameterBlock_0.parameters(),
 		  poseParameterBlock_1.parameters(), speedAndBiasParameterBlock_1.parameters());
