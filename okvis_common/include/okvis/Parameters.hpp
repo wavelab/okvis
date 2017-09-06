@@ -52,18 +52,11 @@
 #include <okvis/MultiFrame.hpp>
 #include <okvis/cameras/NCameraSystem.hpp>
 #include <okvis/kinematics/Transformation.hpp>
+#include <okvis/kinematics/DhParameters.hpp>
+
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
-
-/// \brief Set of Denavit–Hartenberg parameters for one frame
-struct DhParameters
-{
-  double theta = 0;  ///< Joint rotation [rad] (value used for initialization)
-  double d = 0;      ///< Link offset [m]
-  double a = 0;      ///< Link length [m]
-  double alpha = 0;  ///< Twist angle [rad]
-};
 
 /// \brief Struct to define the behavior of the camera extrinsics.
 struct ExtrinsicsEstimationParameters
