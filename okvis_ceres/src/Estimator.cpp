@@ -190,15 +190,13 @@ bool Estimator::addStates(
   lastElementIterator++;
 
   // initialize new sensor states
-  // cameras:
+  // for each camera:
   for (size_t i = 0; i < extrinsicsEstimationParametersVec_.size(); ++i) {
 
     SpecificSensorStatesContainer cameraInfos(2);
     cameraInfos.at(CameraSensorStates::T_SCi).exists=true;
     cameraInfos.at(CameraSensorStates::Intrinsics).exists=false;
-    if(((extrinsicsEstimationParametersVec_.at(i).sigma_c_relative_translation<1e-12)||
-        (extrinsicsEstimationParametersVec_.at(i).sigma_c_relative_orientation<1e-12))&&
-        (statesMap_.size() > 1)){
+    if (extrinsicsEstimationParametersVec_.at(i).needsRelativeEstimation() && statesMap_.size() > 1) {
       // use the same block...
       cameraInfos.at(CameraSensorStates::T_SCi).id =
           lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id;
@@ -245,14 +243,11 @@ bool Estimator::addStates(
 
     // sensor states
     for (size_t i = 0; i < extrinsicsEstimationParametersVec_.size(); ++i) {
-      double translationStdev = extrinsicsEstimationParametersVec_.at(i).sigma_absolute_translation;
-      double translationVariance = translationStdev*translationStdev;
-      double rotationStdev = extrinsicsEstimationParametersVec_.at(i).sigma_absolute_orientation;
-      double rotationVariance = rotationStdev*rotationStdev;
-      if(translationVariance>1.0e-16 && rotationVariance>1.0e-16){
+      const auto &params = extrinsicsEstimationParametersVec_.at(i);
+      if (params.needsAbsoluteEstimation()) {
         const okvis::kinematics::Transformation T_SC = *multiFrame->T_SC(i);
         std::shared_ptr<ceres::PoseError > cameraPoseError(
-              new ceres::PoseError(T_SC, translationVariance, rotationVariance));
+              new ceres::PoseError(T_SC, params.translationVariance(), params.rotationVariance()));
         // add to map
         mapPtr_->addResidualBlock(
             cameraPoseError,

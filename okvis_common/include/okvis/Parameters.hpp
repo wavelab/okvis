@@ -56,6 +56,15 @@
 /// \brief okvis Main namespace of this package.
 namespace okvis {
 
+/// \brief Set of Denavit–Hartenberg parameters for one frame
+struct DhParameters
+{
+  double theta = 0;  ///< Joint rotation [rad] (value used for initialization)
+  double d = 0;      ///< Link offset [m]
+  double a = 0;      ///< Link length [m]
+  double alpha = 0;  ///< Twist angle [rad]
+};
+
 /// \brief Struct to define the behavior of the camera extrinsics.
 struct ExtrinsicsEstimationParameters
 {
@@ -66,6 +75,7 @@ struct ExtrinsicsEstimationParameters
         sigma_absolute_orientation(0.0),
         sigma_c_relative_translation(0.0),
         sigma_c_relative_orientation(0.0)
+
   {
   }
 
@@ -87,6 +97,26 @@ struct ExtrinsicsEstimationParameters
   {
   }
 
+  /** @brief true if transform priors need online estimation */
+  bool needsAbsoluteEstimation() const {
+    return (translationVariance() > 1.0e-16) && (rotationVariance() > 1.0e-16);
+
+  }
+
+  /** @brief true if online estimation must be updated over time */
+  bool needsRelativeEstimation() const {
+    return (sigma_c_relative_translation < 1e-12) || (sigma_c_relative_orientation < 1e-12);
+  }
+
+  double translationVariance() const {
+    return sigma_absolute_translation * sigma_absolute_translation;
+  }
+
+  double rotationVariance() const {
+    return sigma_absolute_orientation * sigma_absolute_orientation;
+  }
+
+
   // absolute (prior) w.r.t frame S
   double sigma_absolute_translation; ///< Absolute translation stdev. [m]
   double sigma_absolute_orientation; ///< Absolute orientation stdev. [rad]
@@ -94,6 +124,10 @@ struct ExtrinsicsEstimationParameters
   // relative (temporal)
   double sigma_c_relative_translation; ///< Relative translation noise density. [m/sqrt(Hz)]
   double sigma_c_relative_orientation; ///< Relative orientation noise density. [rad/sqrt(Hz)]
+
+  okvis::kinematics::Transformation T_EC; ///< Static transform from end effector (E) to camera frame (C)
+  okvis::kinematics::Transformation T_SA; ///< Static transform from IMU (S) to base of the kinematic chain (A)
+  std::vector<DhParameters> dh_chain_AE; ///< chain of DH parameters comprising a transform from A to E
 };
 
 /*!
