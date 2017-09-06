@@ -41,6 +41,7 @@
 #include <glog/logging.h>
 #include <okvis/Estimator.hpp>
 #include <okvis/ceres/PoseParameterBlock.hpp>
+#include <okvis/ceres/AnglesParameterBlock.hpp>
 #include <okvis/ceres/ImuError.hpp>
 #include <okvis/ceres/PoseError.hpp>
 #include <okvis/ceres/RelativePoseError.hpp>
@@ -192,16 +193,49 @@ bool Estimator::addStates(
   // initialize new sensor states
   // for each camera:
   for (size_t i = 0; i < extrinsicsEstimationParametersVec_.size(); ++i) {
+    const auto &params = extrinsicsEstimationParametersVec_.at(i);
 
     SpecificSensorStatesContainer cameraInfos(2);
     cameraInfos.at(CameraSensorStates::T_SCi).exists=true;
     cameraInfos.at(CameraSensorStates::Intrinsics).exists=false;
-    if (extrinsicsEstimationParametersVec_.at(i).needsRelativeEstimation() && statesMap_.size() > 1) {
+
+    // Dynamic camera extension
+    if (params.needsDhEstimation()) {
+      cameraInfos.at(CameraSensorStates::GimbalAngles).exists = true;
+
+      // add a pose parameter block for the gimbal angles
+      // @todo generalize to other sizes of chain
+      OKVIS_ASSERT_TRUE(Exception, params.dh_chain_AE.size() == 2, "only 2-joint gimbals are supported for now");
+
+      Eigen::Vector2d estimate;
+      if (statesMap_.size() > 1) {
+        // use previous value as estimate
+        const auto last_id = lastElementIterator->second.sensors.at(
+            SensorStates::Camera).at(i).at(CameraSensorStates::GimbalAngles).id;
+        const auto last_angles_ptr = std::static_pointer_cast<ceres::AnglesParameterBlock<2>>(
+            mapPtr_->parameterBlockPtr(last_id));
+        estimate = last_angles_ptr->estimate();
+      } else {
+        // use initial value from parameters as estimate
+        estimate = params.dhThetaInitialValues();
+      }
+
+      const auto id = IdProvider::instance().newId();
+      auto anglesBlockPtr = std::make_shared<okvis::ceres::AnglesParameterBlock<2>>(
+          estimate, id, multiFrame->timestamp());
+      if (!mapPtr_->addParameterBlock(anglesBlockPtr, ceres::Map::Trivial)) {
+        return false;
+      }
+      cameraInfos.at(CameraSensorStates::GimbalAngles).id = id;
+    }
+
+    if (params.needsRelativeEstimation() && statesMap_.size() > 1) {
       // use the same block...
       cameraInfos.at(CameraSensorStates::T_SCi).id =
           lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id;
     } else {
-      const okvis::kinematics::Transformation T_SC = *multiFrame->T_SC(i);
+      // add a pose parameter block for T_SCi
+      const okvis::kinematics::Transformation T_SC = *multiFrame->T_SC(i);  // use this as estimate
       uint64_t id = IdProvider::instance().newId();
       std::shared_ptr<okvis::ceres::PoseParameterBlock> extrinsicsParameterBlockPtr(
           new okvis::ceres::PoseParameterBlock(T_SC, id,

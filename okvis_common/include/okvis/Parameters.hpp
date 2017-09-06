@@ -97,6 +97,11 @@ struct ExtrinsicsEstimationParameters
   {
   }
 
+  /** @brief true if this camera needs estimation of DH parameters */
+  bool needsDhEstimation() const {
+    return !dh_chain_AE.empty();
+  }
+
   /** @brief true if transform priors need online estimation */
   bool needsAbsoluteEstimation() const {
     return (translationVariance() > 1.0e-16) && (rotationVariance() > 1.0e-16);
@@ -114,6 +119,14 @@ struct ExtrinsicsEstimationParameters
 
   double rotationVariance() const {
     return sigma_absolute_orientation * sigma_absolute_orientation;
+  }
+
+  Eigen::VectorXd dhThetaInitialValues() const {
+    auto thetas = Eigen::VectorXd{dh_chain_AE.size()};
+    for (auto i = 0u; i < dh_chain_AE.size(); ++i) {
+      thetas[i] = dh_chain_AE[i].theta;
+    }
+    return thetas;
   }
 
 

@@ -435,7 +435,7 @@ class Estimator : public VioBackendInterface
     }
     uint64_t id; ///< The ID.
     bool isRequired; ///< Whether or not we require the state.
-    bool exists; ///< Whether or not this exists in the ceres problem.
+    bool exists = false; ///< Whether or not this exists in the ceres problem.
   };
 
   /// \brief GlobalStates The global states enumerated
@@ -464,6 +464,7 @@ class Estimator : public VioBackendInterface
   {
     T_SCi = 0, ///< Extrinsics as T_SC
     Intrinsics = 1, ///< Intrinsics
+    GimbalAngles = 2 ///< angles of joints holding the camera, contributing to extrinsincs. Incompatible with T_SC
   };
 
   /// \brief ImuSensorStates The IMU-internal states enumerated
