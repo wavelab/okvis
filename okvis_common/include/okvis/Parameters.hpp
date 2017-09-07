@@ -52,7 +52,7 @@
 #include <okvis/MultiFrame.hpp>
 #include <okvis/cameras/NCameraSystem.hpp>
 #include <okvis/kinematics/Transformation.hpp>
-#include <okvis/kinematics/DhParameters.hpp>
+#include <okvis/kinematics/GimbalTransformation.hpp>
 
 
 /// \brief okvis Main namespace of this package.
@@ -92,7 +92,8 @@ struct ExtrinsicsEstimationParameters
 
   /** @brief true if this camera needs estimation of DH parameters */
   bool needsDhEstimation() const {
-    return !dh_chain_AE.empty();
+//    return !dh_chain_AE.empty();
+    return false;
   }
 
   /** @brief true if transform priors need online estimation */
@@ -115,11 +116,12 @@ struct ExtrinsicsEstimationParameters
   }
 
   Eigen::VectorXd dhThetaInitialValues() const {
-    auto thetas = Eigen::VectorXd{dh_chain_AE.size()};
-    for (auto i = 0u; i < dh_chain_AE.size(); ++i) {
-      thetas[i] = dh_chain_AE[i].theta;
-    }
-    return thetas;
+//    auto thetas = Eigen::VectorXd{dh_chain_AE.size()};
+//    for (auto i = 0u; i < dh_chain_AE.size(); ++i) {
+//      thetas[i] = dh_chain_AE[i].theta;
+//    }
+//    return thetas;
+    return Eigen::VectorXd{};
   }
 
 
@@ -133,7 +135,7 @@ struct ExtrinsicsEstimationParameters
 
   okvis::kinematics::Transformation T_EC; ///< Static transform from end effector (E) to camera frame (C)
   okvis::kinematics::Transformation T_SA; ///< Static transform from IMU (S) to base of the kinematic chain (A)
-  std::vector<DhParameters> dh_chain_AE; ///< chain of DH parameters comprising a transform from A to E
+//  std::vector<DhParameters> dh_chain_AE; ///< chain of DH parameters comprising a transform from A to E
 };
 
 /*!

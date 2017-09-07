@@ -46,6 +46,7 @@
 #include <okvis/ceres/PoseError.hpp>
 #include <okvis/ceres/RelativePoseError.hpp>
 #include <okvis/ceres/SpeedAndBiasError.hpp>
+#include <okvis/ceres/GimbalAnglesError.hpp>
 #include <okvis/IdProvider.hpp>
 #include <okvis/MultiFrame.hpp>
 #include <okvis/assert_macros.hpp>
@@ -205,7 +206,7 @@ bool Estimator::addStates(
 
       // add a pose parameter block for the gimbal angles
       // @todo generalize to other sizes of chain
-      OKVIS_ASSERT_TRUE(Exception, params.dh_chain_AE.size() == 2, "only 2-joint gimbals are supported for now");
+//      OKVIS_ASSERT_TRUE(Exception, params.dh_chain_AE.size() == 2, "only 2-joint gimbals are supported for now");
 
       Eigen::Vector2d estimate;
       if (statesMap_.size() > 1) {
@@ -278,6 +279,11 @@ bool Estimator::addStates(
     // sensor states
     for (size_t i = 0; i < extrinsicsEstimationParametersVec_.size(); ++i) {
       const auto &params = extrinsicsEstimationParametersVec_.at(i);
+
+      if(params.needsRelativeEstimation()) {
+
+      }
+
       if (params.needsAbsoluteEstimation()) {
         const okvis::kinematics::Transformation T_SC = *multiFrame->T_SC(i);
         std::shared_ptr<ceres::PoseError > cameraPoseError(
