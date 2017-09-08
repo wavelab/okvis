@@ -60,10 +60,29 @@ struct DhParameters
     return {theta, 0, alpha};
   }
 
+  /// \brief jacobian of omega wrt the dh parameters theta, d, a, alpha
+  Eigen::Matrix<double, 3, 4> omegaJacobian() const {
+    Eigen::Matrix<double, 3, 4> out;
+    out << 1, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 1;
+    return out;
+  }
+
   /// \brief return translation vector
   Eigen::Vector3d translation() const {
     return {a * cos(theta), a * sin(theta), d};
   }
+
+  /// \brief jacobian of translation wrt the dh parameters theta, d, a, alpha
+  Eigen::Matrix<double, 3, 4> translationJacobian() const {
+    Eigen::Matrix<double, 3, 4> out;
+    out << -a*sin(theta), 0, cos(theta), 0,
+        a*cos(theta), 0, sin(theta), 0,
+        0, 1, 0, 0;
+    return out;
+  }
+
 };
 
 /// \brief Compute homogeneous transformation from parameters
