@@ -223,6 +223,26 @@ class Transformation
   template<typename Derived_jacobian>
   bool liftJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobian) const;
 
+  /// \brief Get the left jacobian of SE(3)
+  /// That is, the "minimal" 6x6 jacobian of composing this with rhs, w.r.t. this
+  /// @param[in] rhs The right-hand side transformation for this to be multiplied with.
+  /// @param[out] jacobian The output 6x6 Jacobian
+  /// \return True on success.
+  template<typename Derived_jacobian>
+  bool composeLeftJacobian(
+      const Transformation & rhs,
+      const Eigen::MatrixBase<Derived_jacobian> & jacobian) const;
+
+  /// \brief Get the right jacobian of SE(3)
+  /// That is, the "minimal" 6x6 jacobian of composing this with rhs, w.r.t. rhs
+  /// @param[in] rhs The right-hand side transformation for this to be multiplied with.
+  /// @param[out] jacobian The output 6x6 Jacobian
+  /// \return True on success.
+  template<typename Derived_jacobian>
+  bool composeRightJacobian(
+      const Transformation & rhs,
+      const Eigen::MatrixBase<Derived_jacobian> & jacobian) const;
+
  protected:
   /// \brief Update the caching of the rotation matrix.
   void updateC();

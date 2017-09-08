@@ -297,5 +297,35 @@ inline bool Transformation::liftJacobian(const Eigen::MatrixBase<Derived_jacobia
   return true;
 }
 
+template<typename Derived_jacobian>
+bool Transformation::composeLeftJacobian(
+    const Transformation & rhs,
+    const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
+  EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 6, 6);
+  auto &jacobian_out = const_cast<Eigen::MatrixBase<Derived_jacobian> &>(jacobian);
+
+  jacobian_out.template topLeftCorner<3, 3>().setIdentity();
+  jacobian_out.template bottomRightCorner<3, 3>().setIdentity();
+  jacobian_out.template topRightCorner<3, 3>() = -crossMx(this->q() * rhs.r());
+  jacobian_out.template bottomLeftCorner<3, 3>().setZero();
+
+  return true;
+}
+
+template<typename Derived_jacobian>
+bool Transformation::composeRightJacobian(
+    const Transformation & rhs,
+    const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
+  EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 6, 6);
+  auto &jacobian_out = const_cast<Eigen::MatrixBase<Derived_jacobian> &>(jacobian);
+
+  jacobian_out.template topLeftCorner<3, 3>() = this->C();
+  jacobian_out.template bottomRightCorner<3, 3>() = this->C();
+  jacobian_out.template topRightCorner<3, 3>().setZero();
+  jacobian_out.template bottomLeftCorner<3, 3>().setZero();
+
+  return true;
+}
+
 }  // namespace kinematics
 }  // namespace okvis
