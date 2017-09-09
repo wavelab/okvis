@@ -79,13 +79,16 @@ class TransformationBase
   /// \warning USE WITH CARE!
   virtual const double* parameterPtr() const = 0;
 
+  /// \brief Set this to a random transformation.
+  virtual void setRandom() = 0;
+
   /// \brief Returns a copy of the transformation inverted.
   virtual Transformation inverse() const = 0;
 
   // operator* (group operator)
   /// \brief Multiplication with another transformation object.
   /// @param[in] rhs The right-hand side transformation for this to be multiplied with.
-  virtual Transformation operator*(const Transformation & rhs) const = 0;
+  virtual Transformation operator*(const TransformationBase & rhs) const = 0;
 
   /// \brief Transform a direction as v_A = C_AB*v_B (with rhs = hp_B)..
   /// \warning This only applies the rotation!

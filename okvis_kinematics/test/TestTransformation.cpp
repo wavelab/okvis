@@ -31,14 +31,17 @@
  *********************************************************************************/
 
 #include <okvis/kinematics/Transformation.hpp>
+#include <okvis/kinematics/GimbalTransformation.hpp>
 #include <iostream>
 #include "gtest/gtest.h"
 
-TEST(Transformation, operations) {
-  for (size_t i = 0; i < 100; ++i) {
-    okvis::kinematics::Transformation T_AB;
+template <typename Transformation, int N>
+class TransformationTestFixture {
+ public:
+  void testOperations() {
+    Transformation T_AB;
     T_AB.setRandom();
-    okvis::kinematics::Transformation T_BC;
+    Transformation T_BC;
     T_BC.setRandom();
 
     // Test inverse
@@ -49,35 +52,16 @@ TEST(Transformation, operations) {
     // Test composition
     EXPECT_TRUE(((T_AB * T_BC).T() - T_AB.T() * T_BC.T()).norm() < 1e-8);
 
-    // Test construction
-    okvis::kinematics::Transformation T_AB_alternative(T_AB.T());
-    EXPECT_TRUE((T_AB.T() - T_AB_alternative.T()).norm() < 1e-8);
-    okvis::kinematics::Transformation T_AB_alternative2(T_AB.r(), T_AB.q());
-    EXPECT_TRUE((T_AB.T() - T_AB_alternative2.T()).norm() < 1e-8);
-
-    // Test =
-    okvis::kinematics::Transformation T_AB_alternative3;
-    T_AB_alternative3 = T_AB;
-    EXPECT_TRUE((T_AB.T() - T_AB_alternative3.T()).norm() < 1e-8);
-
-    // Test setters
-    okvis::kinematics::Transformation T_AB_alternative4;
-    T_AB_alternative4.set(T_AB.r(), T_AB.q());
-    EXPECT_TRUE((T_AB.T() - T_AB_alternative4.T()).norm() < 1e-8);
-    okvis::kinematics::Transformation T_AB_alternative5;
-    T_AB_alternative5.set(T_AB.T());
-    EXPECT_TRUE((T_AB.T() - T_AB_alternative5.T()).norm() < 1e-8);
-
     T_AB.setRandom();
 
     // Test oplus
     const double dp = 1.0e-6;
-    Eigen::Matrix<double, 7, 6, Eigen::RowMajor> jacobian_numDiff;
-    for (size_t i = 0; i < 6; ++i) {
-      okvis::kinematics::Transformation T_AB_p = T_AB;
-      okvis::kinematics::Transformation T_AB_m = T_AB;
-      Eigen::Matrix<double, 6, 1> dp_p;
-      Eigen::Matrix<double, 6, 1> dp_m;
+    Eigen::Matrix<double, 7, N, Eigen::RowMajor> jacobian_numDiff;
+    for (size_t i = 0; i < N; ++i) {
+      Transformation T_AB_p = T_AB;
+      Transformation T_AB_m = T_AB;
+      Eigen::Matrix<double, N, 1> dp_p;
+      Eigen::Matrix<double, N, 1> dp_m;
       dp_p.setZero();
       dp_m.setZero();
       dp_p[i] = dp;
@@ -86,90 +70,98 @@ TEST(Transformation, operations) {
       T_AB_m.oplus(dp_m);
       /*jacobian_numDiff.block<7, 1>(0, i) = (T_AB_p.parameters()
           - T_AB_m.parameters()) / (2.0 * dp);*/
-      jacobian_numDiff.block<3, 1>(0, i) = (T_AB_p.r() - T_AB_m.r())
+      jacobian_numDiff.template block<3, 1>(0, i) = (T_AB_p.r() - T_AB_m.r())
           / (2.0 * dp);
-      jacobian_numDiff.block<4, 1>(3, i) = (T_AB_p.q().coeffs()
+      jacobian_numDiff.template block<4, 1>(3, i) = (T_AB_p.q().coeffs()
           - T_AB_m.q().coeffs()) / (2.0 * dp);
     }
-    Eigen::Matrix<double, 7, 6, Eigen::RowMajor> jacobian;
+    Eigen::Matrix<double, 7, N, Eigen::RowMajor> jacobian;
     T_AB.oplusJacobian(jacobian);
     //std::cout << jacobian << std::endl;
     //std::cout << jacobian_numDiff << std::endl;
     EXPECT_TRUE((jacobian - jacobian_numDiff).norm() < 1e-8);
     // also check lift Jacobian: dChi/dx*dx/dChi == 1
-    Eigen::Matrix<double, 6, 7, Eigen::RowMajor> lift_jacobian;
+    Eigen::Matrix<double, N, 7, Eigen::RowMajor> lift_jacobian;
     T_AB.liftJacobian(lift_jacobian);
     EXPECT_TRUE(
-        (lift_jacobian * jacobian - Eigen::Matrix<double, 6, 6>::Identity())
+        (lift_jacobian * jacobian - Eigen::Matrix<double, N, N>::Identity())
             .norm() < 1e-8);
+  }
+};
 
-    // Test minus
-    okvis::kinematics::Transformation T_AB_disturbed = T_AB;
-    Eigen::Matrix<double, 6, 1> delta, delta2;
-    delta.setRandom();
-    delta *= 0.1;  // quite large disturbance
-    T_AB_disturbed.oplus(delta);
-    // get numeric Jacobian
-    Eigen::Matrix<double, 6, 6, Eigen::RowMajor> jacobianMinus_numDiff;
-    /*for(size_t i=0; i<6; ++i){
-     okvis::kinematics::Transformation T_AB_p = T_AB_disturbed;
-     okvis::kinematics::Transformation T_AB_m = T_AB_disturbed;
-     Eigen::Matrix<double,6,1> dp_p;
-     Eigen::Matrix<double,6,1> dp_m;
-     dp_p.setZero();
-     dp_m.setZero();
-     dp_p[i] = dp;
-     dp_m[i] = -dp;
-     T_AB_p.oplus(dp_p);
-     T_AB_m.oplus(dp_m);
-     }*/
-    //Eigen::Matrix<double, 6, 6, Eigen::RowMajor> minusJacobian;
-    //T_AB_disturbed.minus(T_AB, delta2, minusJacobian);
-    //EXPECT_TRUE((delta - delta2).norm() < 1e-8);
+TEST(Transformation, construction) {
+  // Test construction
+  okvis::kinematics::Transformation T_AB{};
+
+  okvis::kinematics::Transformation T_AB_alternative(T_AB.T());
+  EXPECT_TRUE((T_AB.T() - T_AB_alternative.T()).norm() < 1e-8);
+  okvis::kinematics::Transformation T_AB_alternative2(T_AB.r(), T_AB.q());
+  EXPECT_TRUE((T_AB.T() - T_AB_alternative2.T()).norm() < 1e-8);
+
+  // Test =
+  okvis::kinematics::Transformation T_AB_alternative3;
+  T_AB_alternative3 = T_AB;
+  EXPECT_TRUE((T_AB.T() - T_AB_alternative3.T()).norm() < 1e-8);
+
+  // Test setters
+  okvis::kinematics::Transformation T_AB_alternative4;
+  T_AB_alternative4.set(T_AB.r(), T_AB.q());
+  EXPECT_TRUE((T_AB.T() - T_AB_alternative4.T()).norm() < 1e-8);
+  okvis::kinematics::Transformation T_AB_alternative5;
+  T_AB_alternative5.set(T_AB.T());
+  EXPECT_TRUE((T_AB.T() - T_AB_alternative5.T()).norm() < 1e-8);
+}
+
+TEST(Transformation, operations) {
+  TransformationTestFixture<okvis::kinematics::Transformation, 6> fixture{};
+  for (size_t i = 0; i < 100; ++i) {
+    fixture.testOperations();
   }
 }
 
-TEST(Transformation, composition) {
+TEST(Transformation, compositionJacobians) {
+  okvis::kinematics::Transformation T_AB, T_BC;
+  T_AB.setRandom();
+  T_BC.setRandom();
+
+  // Do composition
+  const auto T_AC = T_AB * T_BC;
+  Eigen::Matrix<double, 6, 6> jacobian_left, jacobian_right;
+  T_AB.composeLeftJacobian(T_BC, jacobian_left);
+  T_AB.composeRightJacobian(T_BC, jacobian_right);
+
+  // Test jacobians against forward difference
+  Eigen::Matrix<double, 6, 6> left_num_diff, right_num_diff;
+  const double dp = 1.0e-6;
+  for (size_t i = 0; i < 6; ++i) {
+    auto T_AB_p = T_AB;
+    auto T_BC_p = T_BC;
+
+    Eigen::Matrix<double, 6, 1> dp_p;
+    dp_p.setZero();
+    dp_p[i] = dp;
+
+    T_AB_p.oplus(dp_p);
+    const auto res_left = T_AB_p * T_BC;
+    left_num_diff.block<3, 1>(0, i) = (res_left.r() - T_AC.r()) / dp;
+    // no minus operation, so implement minimal difference between quaternions here
+    left_num_diff.block<3, 1>(3, i) = okvis::kinematics::logMap(res_left.q() * T_AC.q().inverse()) / dp * 2;
+
+
+    T_BC_p.oplus(dp_p);
+    const auto res_right = T_AB * T_BC_p;
+    right_num_diff.block<3, 1>(0, i) = (res_right.r() - T_AC.r()) / dp;
+    right_num_diff.block<3, 1>(3, i) = okvis::kinematics::logMap(res_right.q() * T_AC.q().inverse()) / dp * 2;
+  }
+
+  EXPECT_LT((jacobian_left - left_num_diff).norm(), 1e-5);
+  EXPECT_LT((jacobian_right - right_num_diff).norm(), 1e-5);
+}
+
+TEST(GimbalTransformation, DISABLED_operations) {
+  TransformationTestFixture<okvis::kinematics::GimbalTransformation<3>, 3> fixture{};
   for (size_t i = 0; i < 100; ++i) {
-
-    okvis::kinematics::Transformation T_AB;
-    T_AB.setRandom();
-    okvis::kinematics::Transformation T_BC;
-    T_BC.setRandom();
-
-    // Do composition
-    const auto T_AC = T_AB * T_BC;
-    Eigen::Matrix<double, 6, 6> jacobian_left, jacobian_right;
-    T_AB.composeLeftJacobian(T_BC, jacobian_left);
-    T_AB.composeRightJacobian(T_BC, jacobian_right);
-
-    // Test jacobians against forward difference
-    Eigen::Matrix<double, 6, 6> left_num_diff, right_num_diff;
-    const double dp = 1.0e-6;
-    for (size_t i = 0; i < 6; ++i) {
-      auto T_AB_p = T_AB;
-      auto T_BC_p = T_BC;
-
-      Eigen::Matrix<double, 6, 1> dp_p;
-      dp_p.setZero();
-      dp_p[i] = dp;
-
-      T_AB_p.oplus(dp_p);
-      const auto res_left = T_AB_p * T_BC;
-      left_num_diff.block<3, 1>(0, i) = (res_left.r() - T_AC.r()) / dp;
-      // no minus operation, so implement minimal difference between quaternions here
-      left_num_diff.block<3, 1>(3, i) = okvis::kinematics::logMap(res_left.q() * T_AC.q().inverse()) / dp * 2;
-
-
-      T_BC_p.oplus(dp_p);
-      const auto res_right = T_AB * T_BC_p;
-      right_num_diff.block<3, 1>(0, i) = (res_right.r() - T_AC.r()) / dp;
-      right_num_diff.block<3, 1>(3, i) = okvis::kinematics::logMap(res_right.q() * T_AC.q().inverse()) / dp * 2;
-    }
-
-    EXPECT_LT((jacobian_left - left_num_diff).norm(), 1e-5);
-    EXPECT_LT((jacobian_right - right_num_diff).norm(), 1e-5);
-
+    fixture.testOperations();
   }
 }
 

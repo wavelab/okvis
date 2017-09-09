@@ -221,8 +221,8 @@ inline Transformation Transformation::Identity() {
 
 // operator*
 inline Transformation Transformation::operator*(
-    const Transformation & rhs) const {
-  return Transformation(C_ * rhs.r_ + r_, q_ * rhs.q_);
+    const TransformationBase & rhs) const {
+  return Transformation(C_ * rhs.r() + r_, q_ * rhs.q());
 }
 inline Eigen::Vector3d Transformation::operator*(
     const Eigen::Vector3d & rhs) const {

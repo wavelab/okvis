@@ -83,7 +83,7 @@ class Transformation : public TransformationBase
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  /// \brief Default constructor: initialises a unit transformation.
+  /// \brief Default constructor: initialises an identity transformation.
   Transformation();
 
   /// \brief Copy constructor: nothing fancy but takes care
@@ -153,7 +153,7 @@ class Transformation : public TransformationBase
   }
 
   /// \brief Set this to a random transformation.
-  void setRandom();
+  void setRandom() override;
   /// \brief Set this to a random transformation with bounded rotation and translation.
   /// @param[in] translationMaxMeters Maximum translation [m].
   /// @param[in] rotationMaxRadians Maximum rotation [rad].
@@ -180,7 +180,7 @@ class Transformation : public TransformationBase
   // operator* (group operator)
   /// \brief Multiplication with another transformation object.
   /// @param[in] rhs The right-hand side transformation for this to be multiplied with.
-  Transformation operator*(const Transformation & rhs) const override;
+  Transformation operator*(const TransformationBase & rhs) const override;
 
   /// \brief Transform a direction as v_A = C_AB*v_B (with rhs = hp_B)..
   /// \warning This only applies the rotation!

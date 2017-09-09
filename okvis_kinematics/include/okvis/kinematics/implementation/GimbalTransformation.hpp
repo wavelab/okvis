@@ -43,6 +43,11 @@ namespace okvis {
 namespace kinematics {
 
 template <int N>
+GimbalTransformation<N>::GimbalTransformation() {
+  updateCache();
+}
+
+template <int N>
 template <typename... DhArgs>
 GimbalTransformation<N>::GimbalTransformation(Transformation T_SA, Transformation T_EC, DhArgs... dh) :
     T_SA_{std::move(T_SA)},
@@ -109,6 +114,20 @@ const double* GimbalTransformation<N>::parameterPtr() const
 }
 
 template <int N>
+void GimbalTransformation<N>::setRandom() {
+  for (auto& dh : dhChain_) {
+    Eigen::Vector4d r = Eigen::Vector4d::Random();
+    dh.theta = r[0] * M_PI;
+    dh.alpha = r[1] * M_PI;
+    dh.a = r[2];
+    dh.d = r[3];
+  }
+  T_SA_.setRandom();
+  T_EC_.setRandom();
+  updateCache();
+}
+
+template <int N>
 Transformation GimbalTransformation<N>::inverse() const {
   return overallT().inverse();
 }
@@ -162,7 +181,7 @@ bool GimbalTransformation<N>::oplusJacobian(
 template <int N>
 template<typename Derived_jacobian>
 bool GimbalTransformation<N>::liftJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
-  EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, N, N);
+  EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, N, 7);
   const_cast<Eigen::MatrixBase<Derived_jacobian>&>(jacobian).setIdentity();
   return true;
 }

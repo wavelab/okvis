@@ -63,7 +63,11 @@ namespace kinematics {
  */
 template <int N>
 class GimbalTransformation : public TransformationBase {
+ public:
+  /// \brief Default constructor: initialises an identity transformation.
+  GimbalTransformation();
 
+  /// \brief Construct with given base and end transformations and DH parameters
   template <typename... DhArgs>
   GimbalTransformation(Transformation T_SA, Transformation T_EC, DhArgs... dh);
 
@@ -92,14 +96,37 @@ class GimbalTransformation : public TransformationBase {
   Eigen::Matrix<double, 3, 4> T3x4() const override;
 
   /// \brief The parameters as theta angles in radians.
-  const Eigen::Matrix<double, N, 1> & parameters() const override;
+  const Eigen::Matrix<double, N, 1> & parameters() const;
 
   /// \brief Get the parameters --- support for ceres.
   /// \warning USE WITH CARE!
   const double* parameterPtr() const override;
 
+  /// \brief Set this to a random transformation.
+  void setRandom() override;
+
   /// \brief Returns a copy of the transformation inverted.
   Transformation inverse() const override;
+
+  // operator* (group operator)
+  /// \brief Multiplication with another transformation object.
+  /// @param[in] rhs The right-hand side transformation for this to be multiplied with.
+  Transformation operator*(const TransformationBase & rhs) const override {
+    return this->overallT() * rhs;
+  }
+
+  /// \brief Transform a direction as v_A = C_AB*v_B (with rhs = hp_B)..
+  /// \warning This only applies the rotation!
+  /// @param[in] rhs The right-hand side direction for this to be multiplied with.
+  Eigen::Vector3d operator*(const Eigen::Vector3d & rhs) const override  {
+    return this->overallT() * rhs;
+  }
+
+  /// \brief Transform a homogenous point as hp_B = T_AB*hp_B (with rhs = hp_B).
+  /// @param[in] rhs The right-hand side direction for this to be multiplied with.
+  Eigen::Vector4d operator*(const Eigen::Vector4d & rhs) const override  {
+    return this->overallT() * rhs;
+  }
 
   /// \brief Assignment -- copy. Takes care of proper caching.
   /// @param[in] rhs The rhs for this to be assigned to.
@@ -133,7 +160,7 @@ class GimbalTransformation : public TransformationBase {
 
   /// \brief Gets the jacobian dx/dChi,
   ///        i.e. lift the minimal Jacobian to a full one (as needed by ceres).
-  // @param[out] jacobian The output lift Jacobian (N by N identity matrix).
+  // @param[out] jacobian The output lift Jacobian (N by 7 matrix).
   /// \return True on success.
   template<typename Derived_jacobian>
   bool liftJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobian) const;
