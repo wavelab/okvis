@@ -55,7 +55,7 @@ GimbalTransformation<N>::GimbalTransformation(Transformation T_SA, Transformatio
     T_EC_{std::move(T_EC)},
     dhChain_{dh...}
 {
-  static_assert(N == sizeof...(dh), "Wrong number of DH parameter structs passes to contructor.");
+  static_assert(N == sizeof...(dh), "Wrong number of DH parameter structs passed to contructor.");
 
   for (auto i = 0u; i < N; ++i) {
     parameters_[i] = dhChain_[i].theta;
@@ -67,7 +67,7 @@ GimbalTransformation<N>::GimbalTransformation(Transformation T_SA, Transformatio
 template <int N>
 template<typename Derived>
 bool GimbalTransformation<N>::setParameters(const Eigen::MatrixBase<Derived> & parameters) {
-  EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Derived, 7);
+  EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Derived, N);
   parameters_ = parameters;
   updateCache();
   return true;
@@ -195,6 +195,11 @@ void GimbalTransformation<N>::initCache() {
 
 template <int N>
 void GimbalTransformation<N>::updateCache() {
+  // Update theta part of dh
+  for (auto i = 0u; i < dhChain_.size(); ++i) {
+    dhChain_[i].theta = parameters_[i];
+  }
+
   // Calculate adjacent transforms first
   cached_T[0][0] = T_SA_;
   for (auto link = 0; link < N; ++link) {

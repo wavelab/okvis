@@ -176,7 +176,7 @@ TEST(GimbalTransformation, constructDefault) {
   EXPECT_TRUE(T_SC.T().isIdentity(1e-8));
 }
 
-TEST(GimbalTransformation, DISABLED_constructFromDh) {
+TEST(GimbalTransformation, constructFromDh) {
   okvis::kinematics::Transformation T_SA, T_EC;
   okvis::kinematics::DhParameters dh1, dh2;
   T_SA.setRandom();
@@ -192,15 +192,27 @@ TEST(GimbalTransformation, DISABLED_constructFromDh) {
   EXPECT_LT((T_SC.T() - expected.T()).norm(), 1e-8);
 }
 
-TEST(GimbalTransformation, basics) {
-  okvis::kinematics::GimbalTransformation<2> T_SC;
-  T_SC.setRandom();
+TEST(GimbalTransformation, setParameters) {
+  okvis::kinematics::DhParameters dh1, dh2;
+  dh1.setRandom();
+  dh2 = dh1;
+  dh2.theta = M_PI;
 
-  EXPECT_TRUE(T_SC.q().isApprox(T_SC.overallT().q()));
-  EXPECT_TRUE(T_SC.r().isApprox(T_SC.overallT().r()));
+  okvis::kinematics::GimbalTransformation<1> T_SC{{}, {}, dh1};
+
+  auto expected = transformationFromDh(dh1);
+  EXPECT_LT((T_SC.T() - expected.T()).norm(), 1e-8);
+
+  auto params = Eigen::Matrix<double, 1, 1>{M_PI};
+  T_SC.setParameters(params);
+  EXPECT_EQ(params, T_SC.parameters());
+
+  expected = transformationFromDh(dh2);
+  EXPECT_LT((T_SC.T() - expected.T()).norm(), 1e-8);
+
 }
 
-TEST(GimbalTransformation, DISABLED_operations) {
+TEST(GimbalTransformation, operations) {
   TransformationTestFixture<
       okvis::kinematics::GimbalTransformation<2>, 2> fixture{};
   for (size_t i = 0; i < 100; ++i) {
