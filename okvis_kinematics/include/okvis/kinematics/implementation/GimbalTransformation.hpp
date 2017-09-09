@@ -72,19 +72,6 @@ Transformation GimbalTransformation<N>::overallT() const {
 }
 
 template <int N>
-template <typename Derived_jacobian>
-bool GimbalTransformation<N>::overallTJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobianOut) {
-  EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 6, N);
-  auto& jacobian = const_cast<Eigen::MatrixBase<Derived_jacobian>&>(jacobianOut);
-
-  // T_{SC} = T_{SA} * T_{A{L_1}} * ... * T_{{L_N}E} * T_{EC};
-  // Use the product rule for N functions
-
-
-  return false;
-}
-
-template <int N>
 Eigen::Matrix4d GimbalTransformation<N>::T() const {
   return cachedT_SC_.T();
 }

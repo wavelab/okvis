@@ -76,12 +76,6 @@ class GimbalTransformation : public TransformationBase {
   /// \brief The overall transformation, T_SC
   Transformation overallT() const;
 
-  /// \brief the jacobian of the overall transformation T_SC, w.r.t to joint angle parameters
-  /// Note output parameter is cast to non-const: see https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
-  template <typename Derived_jacobian>
-  bool overallTJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobianOut);
-
-
   /// \brief The overall homogeneous transformation matrix, T_SC
   Eigen::Matrix4d T() const override;
 
@@ -115,6 +109,7 @@ class GimbalTransformation : public TransformationBase {
   /// \tparam Derived_delta Deducible matrix type.
   /// @param[in] delta The Nx1 minimal update.
   /// \return True on success.
+
   template<typename Derived_delta>
   bool oplus(const Eigen::MatrixBase<Derived_delta> & delta);
 
@@ -123,6 +118,7 @@ class GimbalTransformation : public TransformationBase {
   /// @param[in] delta The Nx1 minimal update.
   /// @param[out] jacobian The output Jacobian.
   /// \return True on success.
+  /// \note Note output parameter is cast to non-const: see https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
   template<typename Derived_delta, typename Derived_jacobian>
   bool oplus(const Eigen::MatrixBase<Derived_delta> & delta,
              const Eigen::MatrixBase<Derived_jacobian> & jacobian);
@@ -130,6 +126,7 @@ class GimbalTransformation : public TransformationBase {
   /// \brief Get the Jacobian of the oplus operation (a 7 by N matrix).
   /// @param[out] jacobian The output Jacobian.
   /// \return True on success.
+  /// \note Note output parameter is cast to non-const: see https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
   template<typename Derived_jacobian>
   bool oplusJacobian(
       const Eigen::MatrixBase<Derived_jacobian> & jacobian) const;
