@@ -64,92 +64,47 @@ template <int N>
 class GimbalTransformation {
 
   template <typename... DhArgs>
-  GimbalTransformation(Transformation T_SA, Transformation T_EC, DhArgs... dh) :
-      T_SA_{std::move(T_SA)},
-      T_EC_{std::move(T_EC)},
-      dhChain_{dh...}
-  {
-    static_assert(N == sizeof...(dh), "Wrong number of DH parameter structs passes to contructor.");
-
-    for (auto i = 0u; i < N; ++i) {
-      parameters_[i] = dhChain_[i].theta;
-    }
-    updateCache();
-  }
+  GimbalTransformation(Transformation T_SA, Transformation T_EC, DhArgs... dh);
 
   /// \brief Parameter setting, all 7.
   /// \tparam Derived_coeffs Deducible matrix type.
   /// @param[in] parameters The parameters as theta angles in radians.
   template<typename Derived>
-  bool setParameters(const Eigen::MatrixBase<Derived> & parameters) {
-    EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Derived, 7);
-    parameters_ = parameters;
-    updateCache();
-    return true;
-  }
+  bool setParameters(const Eigen::MatrixBase<Derived> & parameters);
 
   /// \brief The overall transformation, T_SC
-  Transformation overallT() const {
-    return cachedT_SC_;
-  }
+  Transformation overallT() const;
 
   /// \brief the jacobian of the overall transformation T_SC, w.r.t to joint angle parameters
   /// Note output parameter is cast to non-const: see https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
   template <typename Derived_jacobian>
-  bool overallTJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobianOut) {
-    EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 6, N);
-    auto& jacobian = const_cast<Eigen::MatrixBase<Derived_jacobian>&>(jacobianOut);
-
-    // T_{SC} = T_{SA} * T_{A{L_1}} * ... * T_{{L_N}E} * T_{EC};
-    // Use the product rule for N functions
-
-
-    return false;
-  }
+  bool overallTJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobianOut);
 
 
   /// \brief The overall homogeneous transformation matrix, T_SC
-  Eigen::Matrix4d T() const {
-    return cachedT_SC_.T();
-  }
+  Eigen::Matrix4d T() const;
 
   /// \brief Returns the rotation matrix (cached).
-  const Eigen::Matrix3d & C() const {
-    return overallT().C();
-  }
+  const Eigen::Matrix3d & C() const;
 
   /// \brief Returns the translation vector r_AB (represented in frame A).
-  const Eigen::Map<Eigen::Vector3d> & r() const  {
-    return overallT().r();
-  }
+  const Eigen::Map<Eigen::Vector3d> & r() const;
 
   /// \brief Returns the Quaternion q_AB (as an Eigen Quaternion).
-  const Eigen::Map<Eigen::Quaterniond> & q() const  {
-    return overallT().q();
-  }
+  const Eigen::Map<Eigen::Quaterniond> & q() const;
 
   /// \brief Get the upper 3x4 part of the homogeneous transformation matrix T_AB.
-  Eigen::Matrix<double, 3, 4> T3x4() const  {
-    return overallT().T3x4();
-  }
+  Eigen::Matrix<double, 3, 4> T3x4() const;
 
   /// \brief The parameters as theta angles in radians.
-  const Eigen::Matrix<double, N, 1> & parameters() const
-  {
-    return parameters_;
-  }
+  const Eigen::Matrix<double, N, 1> & parameters() const;
 
   /// \brief Get the parameters --- support for ceres.
   /// \warning USE WITH CARE!
-  const double* parameterPtr() const
-  {
-    return &parameters_[0];
-  }
+  const double* parameterPtr() const;
 
   /// \brief Returns a copy of the transformation inverted.
-  Transformation inverse() const {
-    return overallT().inverse();
-  }
+  Transformation inverse() const;
 
   /// \brief Assignment -- copy. Takes care of proper caching.
   /// @param[in] rhs The rhs for this to be assigned to.
@@ -160,12 +115,7 @@ class GimbalTransformation {
   /// @param[in] delta The Nx1 minimal update.
   /// \return True on success.
   template<typename Derived_delta>
-  bool oplus(const Eigen::MatrixBase<Derived_delta> & delta)  {
-    EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Derived_delta, N);
-    parameters_ += delta;
-    updateCache();
-    return true;
-  }
+  bool oplus(const Eigen::MatrixBase<Derived_delta> & delta);
 
   /// \brief Apply a small update with delta being Nx1 --
   ///        the Jacobian is a 7 by N matrix (change in pose wrt the joint parameters)
@@ -174,73 +124,25 @@ class GimbalTransformation {
   /// \return True on success.
   template<typename Derived_delta, typename Derived_jacobian>
   bool oplus(const Eigen::MatrixBase<Derived_delta> & delta,
-             const Eigen::MatrixBase<Derived_jacobian> & jacobian) {
-    EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Derived_delta, N);
-    EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 7, N);
-    if (!oplus(delta)) {
-      return false;
-    }
-    return oplusJacobian(jacobian);
-  }
+             const Eigen::MatrixBase<Derived_jacobian> & jacobian);
 
   /// \brief Get the Jacobian of the oplus operation (a 7 by N matrix).
   /// @param[out] jacobian The output Jacobian.
   /// \return True on success.
   template<typename Derived_jacobian>
   bool oplusJacobian(
-      const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
-    EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 7, N);
-
-    // For each transformation in the chain, working backward
-    for (auto i = N - 1; i >= 0; --i) {
-      // calculate the Jacobian of the change wrt theta
-      const auto omega = dhChain_[i].omega();
-
-    }
-
-    // First, get the 7x6 Jacobian wrt the 6x1 delta obtained from the N joint angles and 3N constant DH parameters
-    Eigen::Matrix<double, 7, 6> baseJacobian;
-    if (!overallT().oplusJacobian(baseJacobian)) {
-      return false;
-    }
-
-    // Then use chain rule
-
-
-    return true;
-  }
+      const Eigen::MatrixBase<Derived_jacobian> & jacobian) const;
 
   /// \brief Gets the jacobian dx/dChi,
   ///        i.e. lift the minimal Jacobian to a full one (as needed by ceres).
   // @param[out] jacobian The output lift Jacobian (N by N identity matrix).
   /// \return True on success.
   template<typename Derived_jacobian>
-  bool liftJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
-    EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, N, N);
-    const_cast<Eigen::MatrixBase<Derived_jacobian>&>(jacobian).setIdentity();
-    return true;
-  }
+  bool liftJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobian) const;
 
  protected:
   /// \brief Update the cache of intermediate transformations
-  void updateCache() {
-    // Calculate adjacent transforms first
-    cached_T[0].push_back(T_SA_);
-    for (auto link = 0; link < N; ++link) {
-      cached_T[link + 1].push_back(transformationFromDh(dhChain_[link]));
-    }
-
-    // Calculate transforms spaced by 2, then 3, and so on
-    for (auto jump = 2; jump <= N + 1; ++jump) {
-      for (auto start = 0; start <= N + 1 - jump; ++start) {
-        const auto end = start + jump;
-        cached_T[start].push_back(cached_T[start].back() * cached_T[end - 1].front());
-      }
-    }
-
-    // Calculate T_SC = T_SE * T_EC
-    cachedT_SC_ = cached_T.front().back() * T_EC_;
-  }
+  void updateCache();
 
   Transformation T_SA_; ///< Static transform from IMU (S) to base of the kinematic chain (A)
   Transformation T_EC_; ///< Static transform from end effector (E) to camera frame (C)
@@ -257,5 +159,7 @@ class GimbalTransformation {
 
 }  // namespace kinematics
 }  // namespace okvis
+
+#include "implementation/GimbalTransformation.hpp"
 
 #endif /* INCLUDE_OKVIS_GIMBALTRANSFORMATION_HPP_ */
