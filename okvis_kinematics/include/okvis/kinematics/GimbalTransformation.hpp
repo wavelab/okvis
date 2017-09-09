@@ -136,7 +136,6 @@ class GimbalTransformation : public TransformationBase {
   /// \tparam Derived_delta Deducible matrix type.
   /// @param[in] delta The Nx1 minimal update.
   /// \return True on success.
-
   template<typename Derived_delta>
   bool oplus(const Eigen::MatrixBase<Derived_delta> & delta);
 

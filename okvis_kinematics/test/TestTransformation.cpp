@@ -52,6 +52,10 @@ class TransformationTestFixture {
     // Test composition
     EXPECT_TRUE(((T_AB * T_BC).T() - T_AB.T() * T_BC.T()).norm() < 1e-8);
 
+  }
+
+  void testOplus() {
+    Transformation T_AB;
     T_AB.setRandom();
 
     // Test oplus
@@ -119,6 +123,13 @@ TEST(Transformation, operations) {
   }
 }
 
+TEST(Transformation, oplus) {
+  TransformationTestFixture<okvis::kinematics::Transformation, 6> fixture{};
+  for (size_t i = 0; i < 100; ++i) {
+    fixture.testOplus();
+  }
+}
+
 TEST(Transformation, compositionJacobians) {
   okvis::kinematics::Transformation T_AB, T_BC;
   T_AB.setRandom();
@@ -158,10 +169,39 @@ TEST(Transformation, compositionJacobians) {
   EXPECT_LT((jacobian_right - right_num_diff).norm(), 1e-5);
 }
 
-TEST(GimbalTransformation, DISABLED_operations) {
+TEST(GimbalTransformation, constructDefault) {
+  okvis::kinematics::GimbalTransformation<3> T_SC;
+  EXPECT_TRUE(T_SC.T().isIdentity(1e-8));
+}
+
+TEST(GimbalTransformation, constructFromDh) {
+  okvis::kinematics::Transformation T_SA, T_EC;
+  okvis::kinematics::DhParameters dh1, dh2, dh3;
+  T_SA.setRandom();
+  T_EC.setRandom();
+  dh1.setRandom();
+  dh2.setRandom();
+  dh3.setRandom();
+  okvis::kinematics::GimbalTransformation<3> T_SC{T_SA, T_EC, dh1, dh2, dh3};
+
+  okvis::kinematics::Transformation expected =
+      T_SA * transformationFromDh(dh1) * transformationFromDh(dh2) * transformationFromDh(dh3) * T_EC;
+
+  EXPECT_LT((T_SC.overallT().T() - expected.T()).norm(), 1e-8);
+  EXPECT_LT((T_SC.T() - expected.T()).norm(), 1e-8);
+}
+
+TEST(GimbalTransformation, operations) {
   TransformationTestFixture<okvis::kinematics::GimbalTransformation<3>, 3> fixture{};
   for (size_t i = 0; i < 100; ++i) {
     fixture.testOperations();
+  }
+}
+
+TEST(GimbalTransformation, DISABLED_oplus) {
+  TransformationTestFixture<okvis::kinematics::GimbalTransformation<3>, 3> fixture{};
+  for (size_t i = 0; i < 100; ++i) {
+    fixture.testOplus();
   }
 }
 

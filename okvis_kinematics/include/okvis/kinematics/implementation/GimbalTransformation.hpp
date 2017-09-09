@@ -116,11 +116,7 @@ const double* GimbalTransformation<N>::parameterPtr() const
 template <int N>
 void GimbalTransformation<N>::setRandom() {
   for (auto& dh : dhChain_) {
-    Eigen::Vector4d r = Eigen::Vector4d::Random();
-    dh.theta = r[0] * M_PI;
-    dh.alpha = r[1] * M_PI;
-    dh.a = r[2];
-    dh.d = r[3];
+    dh.setRandom();
   }
   T_SA_.setRandom();
   T_EC_.setRandom();
