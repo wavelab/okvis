@@ -65,6 +65,17 @@ __inline__ Eigen::Quaterniond deltaQ(const Eigen::Vector3d& dAlpha)
   return Eigen::Quaterniond(dq);
 }
 
+// Implementation from "A Primer on the Differential Calculus of 3D Orientations", Bloesch et al
+__inline__ Eigen::Vector3d logMap(Eigen::Quaterniond q) {
+  const auto norm = q.vec().norm();
+  if (norm < 1e-4) {
+    const auto sign = (0 < q.w()) - (q.w() < 0);
+    return sign * q.vec();
+  } else {
+    return 2 * std::atan2(norm, q.w()) * q.vec() / norm;
+  }
+}
+
 // Right Jacobian, see Forster et al. RSS 2015 eqn. (8)
 __inline__ Eigen::Matrix3d rightJacobian(const Eigen::Vector3d & PhiVec) {
   const double Phi = PhiVec.norm();

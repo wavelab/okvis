@@ -61,6 +61,12 @@ double sinc(double x);
 /// \return The corresponding Quaternion.
 Eigen::Quaterniond deltaQ(const Eigen::Vector3d& dAlpha);
 
+/// \brief Logarithmic map of quaternions
+/// @param[in] q a quaternion
+/// \return The corresponding vector in tangent space
+// from "A Primer on the Differential Calculus of 3D Orientations", Bloesch et al
+Eigen::Vector3d logMap(Eigen::Quaterniond q);
+
 /// \brief Right Jacobian, see Forster et al. RSS 2015 eqn. (8)
 Eigen::Matrix3d rightJacobian(const Eigen::Vector3d & PhiVec);
 
