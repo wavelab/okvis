@@ -188,7 +188,7 @@ bool GimbalTransformation<N>::liftJacobian(const Eigen::MatrixBase<Derived_jacob
 template <int N>
 void GimbalTransformation<N>::initCache() {
   for (auto i = 0; i < N + 1; ++i) {
-    const auto num = N + 2 - i;  // number of cached transforms up to E
+    const auto num = N + 1 - i;  // number of cached transforms up to E
     cached_T[i].resize(num);
   }
 }
@@ -196,7 +196,7 @@ void GimbalTransformation<N>::initCache() {
 template <int N>
 void GimbalTransformation<N>::updateCache() {
   // Update theta part of dh
-  for (auto i = 0u; i < dhChain_.size(); ++i) {
+  for (auto i = 0u; i < N; ++i) {
     dhChain_[i].theta = parameters_[i];
   }
 
