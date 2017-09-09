@@ -44,6 +44,7 @@ namespace kinematics {
 
 template <int N>
 GimbalTransformation<N>::GimbalTransformation() {
+  initCache();
   updateCache();
 }
 
@@ -59,6 +60,7 @@ GimbalTransformation<N>::GimbalTransformation(Transformation T_SA, Transformatio
   for (auto i = 0u; i < N; ++i) {
     parameters_[i] = dhChain_[i].theta;
   }
+  initCache();
   updateCache();
 }
 
@@ -182,19 +184,28 @@ bool GimbalTransformation<N>::liftJacobian(const Eigen::MatrixBase<Derived_jacob
   return true;
 }
 
+// This method resizes the cache. It should not be resized elsewhere
+template <int N>
+void GimbalTransformation<N>::initCache() {
+  for (auto i = 0; i < N + 1; ++i) {
+    const auto num = N + 2 - i;  // number of cached transforms up to E
+    cached_T[i].resize(num);
+  }
+}
+
 template <int N>
 void GimbalTransformation<N>::updateCache() {
   // Calculate adjacent transforms first
-  cached_T[0].push_back(T_SA_);
+  cached_T[0][0] = T_SA_;
   for (auto link = 0; link < N; ++link) {
-    cached_T[link + 1].push_back(transformationFromDh(dhChain_[link]));
+    cached_T[link + 1][0] = transformationFromDh(dhChain_[link]);
   }
 
   // Calculate transforms spaced by 2, then 3, and so on
   for (auto jump = 2; jump <= N + 1; ++jump) {
     for (auto start = 0; start <= N + 1 - jump; ++start) {
       const auto end = start + jump;
-      cached_T[start].push_back(cached_T[start].back() * cached_T[end - 1].front());
+      cached_T[start][jump - 1] = cached_T[start][jump - 2] * cached_T[end - 1][0];
     }
   }
 

@@ -45,12 +45,12 @@ class TransformationTestFixture {
     T_BC.setRandom();
 
     // Test inverse
-    EXPECT_TRUE(
-        ((T_AB * T_AB.inverse()).T() - Eigen::Matrix4d::Identity()).norm()
-            < 1e-8);
+    EXPECT_LT(
+        ((T_AB * T_AB.inverse()).T() - Eigen::Matrix4d::Identity()).norm(),
+        1e-8);
 
     // Test composition
-    EXPECT_TRUE(((T_AB * T_BC).T() - T_AB.T() * T_BC.T()).norm() < 1e-8);
+    EXPECT_LT(((T_AB * T_BC).T() - T_AB.T() * T_BC.T()).norm(), 1e-8);
 
   }
 
