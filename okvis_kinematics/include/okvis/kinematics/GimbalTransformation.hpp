@@ -151,6 +151,14 @@ class GimbalTransformation : public TransformationBase {
   bool oplus(const Eigen::MatrixBase<Derived_delta> & delta,
              const Eigen::MatrixBase<Derived_jacobian> & jacobian);
 
+  /// \brief Get the Jacobian of the tangent vector w.r.t. the joint angles (a 6 by N matrix).
+  /// @param[out] jacobian The output Jacobian.
+  /// \return True on success.
+  /// \note Note output parameter is cast to non-const: see https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
+  template<typename Derived_jacobian>
+  bool oplusMinimalJacobian(
+      const Eigen::MatrixBase<Derived_jacobian> & jacobian) const;
+
   /// \brief Get the Jacobian of the oplus operation (a 7 by N matrix).
   /// @param[out] jacobian The output Jacobian.
   /// \return True on success.

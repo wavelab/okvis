@@ -153,26 +153,56 @@ bool GimbalTransformation<N>::oplus(const Eigen::MatrixBase<Derived_delta> & del
 
 template <int N>
 template<typename Derived_jacobian>
+bool GimbalTransformation<N>::oplusMinimalJacobian(
+    const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
+  EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 6, N);
+  auto &J_SC_theta = const_cast<Eigen::MatrixBase<Derived_jacobian> &>(jacobian);
+  using Scalar = typename Derived_jacobian::Scalar;
+
+  // Each DH link affects only column of the jacobian
+  // For each link i the jacobian wrt theta_i is
+  //   dp_SC/dp_Si * dp_Si / dp_(i-1)i * dp_(i-1)i / dtheta
+  for (auto i = 0; i < N; ++i) {
+
+    // Here L = frame after link i, K = frame before link i
+    const auto& T_SC = cachedT_SC_;
+    const auto& T_SL = cached_T[0][i + 1];
+    const auto& T_KL = cached_T[i + 1][0];
+
+    Eigen::Matrix<Scalar, 6, 6> Jleft_SC_SL;
+    Eigen::Matrix<Scalar, 6, 6> Jright_SL_KL;
+    Eigen::Matrix<Scalar, 6, 1> J_KL_theta;
+
+    T_SC.composeLeftJacobian(T_SL, Jleft_SC_SL);
+    T_SL.composeRightJacobian(T_KL, Jright_SL_KL);
+    dhChain_[i].thetaMinimalJacobian(J_KL_theta);
+
+    J_SC_theta.col(i) = Jleft_SC_SL * Jright_SL_KL * J_KL_theta;
+  }
+  return true;
+}
+
+template <int N>
+template<typename Derived_jacobian>
 bool GimbalTransformation<N>::oplusJacobian(
     const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
   EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 7, N);
+  auto &J_SC_theta = const_cast<Eigen::MatrixBase<Derived_jacobian> &>(jacobian);
+  using Scalar = typename Derived_jacobian::Scalar;
 
-  // For each transformation in the chain, working backward
-  for (auto i = N - 1; i >= 0; --i) {
-    // calculate the Jacobian of the change wrt theta
-    const auto omega = dhChain_[i].omega();
-
-  }
-
-  // First, get the 7x6 Jacobian wrt the 6x1 delta obtained from the N joint angles and 3N constant DH parameters
-  Eigen::Matrix<double, 7, 6> baseJacobian;
-  if (!cachedT_SC_.oplusJacobian(baseJacobian)) {
+  // First, get the 6xN Jacobian wrt thetha
+  Eigen::Matrix<Scalar, 6, N> J_min_theta;
+  if (!this->oplusMinimalJacobian(J_min_theta)) {
     return false;
   }
 
-  // Then use chain rule
+  // Then convert to 7x6 using chain rule
+  Eigen::Matrix<Scalar, 7, 6> J_SC_min;
+  if (!cachedT_SC_.oplusJacobian(J_SC_min)) {
+    return false;
+  }
 
-
+  J_SC_theta = J_SC_min * J_min_theta;
   return true;
 }
 
@@ -181,7 +211,7 @@ template<typename Derived_jacobian>
 bool GimbalTransformation<N>::liftJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
   EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, N, 7);
   const_cast<Eigen::MatrixBase<Derived_jacobian>&>(jacobian).setIdentity();
-  return true;
+  return false;
 }
 
 // This method resizes the cache. It should not be resized elsewhere

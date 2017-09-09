@@ -64,34 +64,16 @@ struct DhParameters
     d = r[3];
   }
 
-  /// \brief return "yaw-pitch-roll" vector
-  Eigen::Vector3d omega() const {
-    return {theta, 0, alpha};
+  /// \brief jacobian of the tangent vector w.r.t. the joint angle theta
+  /// The vector has the translation part first, followed by rotation
+  /// \note output parameter is cast to non-const: see https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
+  template <typename Derived_jacobian>
+  bool thetaMinimalJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
+    EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 6, 1);
+    auto &jacobian_out = const_cast<Eigen::MatrixBase<Derived_jacobian> &>(jacobian);
+    jacobian_out << -a*sin(theta), a*cos(theta), 0, 0, 0, 1;
+    return true;
   }
-
-  /// \brief jacobian of omega wrt the dh parameters theta, d, a, alpha
-  Eigen::Matrix<double, 3, 4> omegaJacobian() const {
-    Eigen::Matrix<double, 3, 4> out;
-    out << 1, 0, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 1;
-    return out;
-  }
-
-  /// \brief return translation vector
-  Eigen::Vector3d translation() const {
-    return {a * cos(theta), a * sin(theta), d};
-  }
-
-  /// \brief jacobian of translation wrt the dh parameters theta, d, a, alpha
-  Eigen::Matrix<double, 3, 4> translationJacobian() const {
-    Eigen::Matrix<double, 3, 4> out;
-    out << -a*sin(theta), 0, cos(theta), 0,
-        a*cos(theta), 0, sin(theta), 0,
-        0, 1, 0, 0;
-    return out;
-  }
-
 };
 
 /// \brief Compute homogeneous transformation from parameters
@@ -106,23 +88,6 @@ inline Transformation transformationFromDh(const DhParameters &dh) {
        0, salpha, calpha, dh.d,
        0, 0, 0, 1;
   return Transformation{T};
-}
-
-/// \brief the jacobian of transformation parameters (dim 7) made from DH parameters wrt varying the joint angle theta
-/// Note output parameter is cast to non-const: see https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
-template <typename Derived_jacobian>
-inline bool transformationJacobianWrtDhTheta(const DhParameters &dh,
-                                             const Eigen::MatrixBase<Derived_jacobian> & jacobianOut) {
-  EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 7, 1);
-  auto &jacobian = const_cast<Eigen::MatrixBase<Derived_jacobian> &>(jacobianOut);
-
-  // Jacobian of translation wrt theta
-  jacobian.template head<3>() << dh.a * -sin(dh.theta), dh.a * cos(dh.theta), 0;
-
-  // Jacobian of rotation quaternion wrt theta
-
-  return false;
-
 }
 
 }  // namespace kinematics

@@ -220,7 +220,7 @@ TEST(GimbalTransformation, operations) {
   }
 }
 
-TEST(GimbalTransformation, DISABLED_oplus) {
+TEST(GimbalTransformation, oplus) {
   TransformationTestFixture<
       okvis::kinematics::GimbalTransformation<2>, 2> fixture{};
   for (size_t i = 0; i < 100; ++i) {
