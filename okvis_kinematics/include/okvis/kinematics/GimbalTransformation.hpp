@@ -64,9 +64,9 @@ template <int N>
 class GimbalTransformation {
 
   template <typename... DhArgs>
-  GimbalTransformation(Transformation T_EC, Transformation T_SA, DhArgs... dh) :
-      T_EC_{std::move(T_EC)},
+  GimbalTransformation(Transformation T_SA, Transformation T_EC, DhArgs... dh) :
       T_SA_{std::move(T_SA)},
+      T_EC_{std::move(T_EC)},
       dhChain_{dh...}
   {
     static_assert(N == sizeof...(dh), "Wrong number of DH parameter structs passes to contructor.");
@@ -198,7 +198,6 @@ class GimbalTransformation {
 
     }
 
-
     // First, get the 7x6 Jacobian wrt the 6x1 delta obtained from the N joint angles and 3N constant DH parameters
     Eigen::Matrix<double, 7, 6> baseJacobian;
     if (!overallT().oplusJacobian(baseJacobian)) {
@@ -223,20 +222,37 @@ class GimbalTransformation {
   }
 
  protected:
-  /// \brief Update the caching of the overall transformation
+  /// \brief Update the cache of intermediate transformations
   void updateCache() {
-    auto T_AE = Transformation{};
-    for (const auto& dh : dhChain_) {
-      T_AE = T_AE * transformationFromDh(dh);
+    // Calculate adjacent transforms first
+    cached_T[0].push_back(T_SA_);
+    for (auto link = 0; link < N; ++link) {
+      cached_T[link + 1].push_back(transformationFromDh(dhChain_[link]));
     }
-    cachedT_SC_ = T_SA_ * T_AE * T_EC_;
+
+    // Calculate transforms spaced by 2, then 3, and so on
+    for (auto jump = 2; jump <= N + 1; ++jump) {
+      for (auto start = 0; start <= N + 1 - jump; ++start) {
+        const auto end = start + jump;
+        cached_T[start].push_back(cached_T[start].back() * cached_T[end - 1].front());
+      }
+    }
+
+    // Calculate T_SC = T_SE * T_EC
+    cachedT_SC_ = cached_T.front().back() * T_EC_;
   }
 
-  Transformation T_EC_; ///< Static transform from end effector (E) to camera frame (C)
   Transformation T_SA_; ///< Static transform from IMU (S) to base of the kinematic chain (A)
+  Transformation T_EC_; ///< Static transform from end effector (E) to camera frame (C)
   std::array<DhParameters, N> dhChain_; ///< chain of DH parameters comprising a transform from A to E. theta is initial
   Eigen::Matrix<double, N, 1> parameters_; ///< changing theta value from each dh joint
   Transformation cachedT_SC_; ///< The cached overall transformation T_SC.
+
+  /// Cache of intermediate transformations. cache_T[a, b] is the transform from the ath to (a+b+1)th frame
+  /// cached_T[0, 0] is T_SA, cached_T[1, 0] is T_AL(1), cached_T[0,N+1] is T_SC
+  /// Only forward transformations are stored, and no transformation ending in C is stored
+  std::array<std::vector<okvis::kinematics::Transformation,
+                          Eigen::aligned_allocator<okvis::kinematics::Transformation>>, N + 1> cached_T;
 };
 
 }  // namespace kinematics
