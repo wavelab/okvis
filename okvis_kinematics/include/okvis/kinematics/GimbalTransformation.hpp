@@ -39,6 +39,7 @@
 #ifndef INCLUDE_OKVIS_GIMBALTRANSFORMATION_HPP_
 #define INCLUDE_OKVIS_GIMBALTRANSFORMATION_HPP_
 
+#include "okvis/kinematics/TransformationBase.hpp"
 #include "okvis/kinematics/DhParameters.hpp"
 
 /// \brief okvis Main namespace of this package.
@@ -61,7 +62,7 @@ namespace kinematics {
  *   - T_EC, static transform from end effector (E) to C
  */
 template <int N>
-class GimbalTransformation {
+class GimbalTransformation : public TransformationBase {
 
   template <typename... DhArgs>
   GimbalTransformation(Transformation T_SA, Transformation T_EC, DhArgs... dh);
@@ -82,29 +83,29 @@ class GimbalTransformation {
 
 
   /// \brief The overall homogeneous transformation matrix, T_SC
-  Eigen::Matrix4d T() const;
+  Eigen::Matrix4d T() const override;
 
   /// \brief Returns the rotation matrix (cached).
-  const Eigen::Matrix3d & C() const;
+  const Eigen::Matrix3d & C() const override;
 
   /// \brief Returns the translation vector r_AB (represented in frame A).
-  const Eigen::Map<Eigen::Vector3d> & r() const;
+  const Eigen::Map<Eigen::Vector3d> & r() const override;
 
   /// \brief Returns the Quaternion q_AB (as an Eigen Quaternion).
-  const Eigen::Map<Eigen::Quaterniond> & q() const;
+  const Eigen::Map<Eigen::Quaterniond> & q() const override;
 
   /// \brief Get the upper 3x4 part of the homogeneous transformation matrix T_AB.
-  Eigen::Matrix<double, 3, 4> T3x4() const;
+  Eigen::Matrix<double, 3, 4> T3x4() const override;
 
   /// \brief The parameters as theta angles in radians.
-  const Eigen::Matrix<double, N, 1> & parameters() const;
+  const Eigen::Matrix<double, N, 1> & parameters() const override;
 
   /// \brief Get the parameters --- support for ceres.
   /// \warning USE WITH CARE!
-  const double* parameterPtr() const;
+  const double* parameterPtr() const override;
 
   /// \brief Returns a copy of the transformation inverted.
-  Transformation inverse() const;
+  Transformation inverse() const override;
 
   /// \brief Assignment -- copy. Takes care of proper caching.
   /// @param[in] rhs The rhs for this to be assigned to.

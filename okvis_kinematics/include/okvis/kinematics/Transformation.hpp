@@ -41,8 +41,7 @@
 
 #include <stdint.h>
 #include <vector>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include "okvis/kinematics/TransformationBase.hpp"
 #include "okvis/kinematics/operators.hpp"
 
 /// \brief okvis Main namespace of this package.
@@ -79,7 +78,7 @@ Eigen::Matrix3d rightJacobian(const Eigen::Vector3d & PhiVec);
 /// but uses Eigen quaternions underneath.
 /// \warning This means the convention is different to SchweizerMesser
 ///          and the RSS'13 / IJRR'14 paper / the Thesis
-class Transformation
+class Transformation : public TransformationBase
 {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -104,9 +103,6 @@ class Transformation
   /// @param[in] T_AB The homogeneous transformation matrix.
   explicit Transformation(const Eigen::Matrix4d & T_AB);
 
-  /// \brief Trivial destructor.
-  ~Transformation();
-
   /// \brief Parameter setting, all 7.
   /// \tparam Derived_coeffs Deducible matrix type.
   /// @param[in] coeffs The parameters as [r_AB,q_AB], q_AB as [x,y,z,w] (Eigen internal convention).
@@ -123,19 +119,19 @@ class Transformation
   }
 
   /// \brief The underlying homogeneous transformation matrix.
-  Eigen::Matrix4d T() const;
+  Eigen::Matrix4d T() const override;
 
   /// \brief Returns the rotation matrix (cached).
-  const Eigen::Matrix3d & C() const;
+  const Eigen::Matrix3d & C() const override;
 
   /// \brief Returns the translation vector r_AB (represented in frame A).
-  const Eigen::Map<Eigen::Vector3d> & r() const;
+  const Eigen::Map<Eigen::Vector3d> & r() const override;
 
   /// \brief Returns the Quaternion q_AB (as an Eigen Quaternion).
-  const Eigen::Map<Eigen::Quaterniond> & q() const;
+  const Eigen::Map<Eigen::Quaterniond> & q() const override;
 
   /// \brief Get the upper 3x4 part of the homogeneous transformation matrix T_AB.
-  Eigen::Matrix<double, 3, 4> T3x4() const;
+  Eigen::Matrix<double, 3, 4> T3x4() const override;
 
   /// \brief The coefficients (parameters) as [r_AB,q_AB], q_AB as [x,y,z,w] (Eigen internal convention).
   const Eigen::Matrix<double, 7, 1> & coeffs() const
@@ -151,7 +147,7 @@ class Transformation
 
   /// \brief Get the parameters --- support for ceres.
   /// \warning USE WITH CARE!
-  const double* parameterPtr() const
+  const double* parameterPtr() const override
   {
     return &parameters_[0];
   }
@@ -179,21 +175,21 @@ class Transformation
   static Transformation Identity();
 
   /// \brief Returns a copy of the transformation inverted.
-  Transformation inverse() const;
+  Transformation inverse() const override;
 
   // operator* (group operator)
   /// \brief Multiplication with another transformation object.
   /// @param[in] rhs The right-hand side transformation for this to be multiplied with.
-  Transformation operator*(const Transformation & rhs) const;
+  Transformation operator*(const Transformation & rhs) const override;
 
   /// \brief Transform a direction as v_A = C_AB*v_B (with rhs = hp_B)..
   /// \warning This only applies the rotation!
   /// @param[in] rhs The right-hand side direction for this to be multiplied with.
-  Eigen::Vector3d operator*(const Eigen::Vector3d & rhs) const;
+  Eigen::Vector3d operator*(const Eigen::Vector3d & rhs) const override;
 
   /// \brief Transform a homogenous point as hp_B = T_AB*hp_B (with rhs = hp_B).
   /// @param[in] rhs The right-hand side direction for this to be multiplied with.
-  Eigen::Vector4d operator*(const Eigen::Vector4d & rhs) const;
+  Eigen::Vector4d operator*(const Eigen::Vector4d & rhs) const override;
 
   /// \brief Assignment -- copy. Takes care of proper caching.
   /// @param[in] rhs The rhs for this to be assigned to.

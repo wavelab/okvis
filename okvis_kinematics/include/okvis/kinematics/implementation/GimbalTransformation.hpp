@@ -84,7 +84,6 @@ bool GimbalTransformation<N>::overallTJacobian(const Eigen::MatrixBase<Derived_j
   return false;
 }
 
-
 template <int N>
 Eigen::Matrix4d GimbalTransformation<N>::T() const {
   return cachedT_SC_.T();
