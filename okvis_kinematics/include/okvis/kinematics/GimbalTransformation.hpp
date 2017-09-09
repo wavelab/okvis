@@ -64,6 +64,8 @@ namespace kinematics {
 template <int N>
 class GimbalTransformation : public TransformationBase {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   /// \brief Default constructor: initialises an identity transformation.
   GimbalTransformation();
 
@@ -77,7 +79,7 @@ class GimbalTransformation : public TransformationBase {
   template<typename Derived>
   bool setParameters(const Eigen::MatrixBase<Derived> & parameters);
 
-  /// \brief The overall transformation, T_SC
+  /// \brief Return a copy of overall transformation, T_SC
   Transformation overallT() const;
 
   /// \brief The overall homogeneous transformation matrix, T_SC
@@ -112,20 +114,20 @@ class GimbalTransformation : public TransformationBase {
   /// \brief Multiplication with another transformation object.
   /// @param[in] rhs The right-hand side transformation for this to be multiplied with.
   Transformation operator*(const TransformationBase & rhs) const override {
-    return this->overallT() * rhs;
+    return cachedT_SC_ * rhs;
   }
 
   /// \brief Transform a direction as v_A = C_AB*v_B (with rhs = hp_B)..
   /// \warning This only applies the rotation!
   /// @param[in] rhs The right-hand side direction for this to be multiplied with.
   Eigen::Vector3d operator*(const Eigen::Vector3d & rhs) const override  {
-    return this->overallT() * rhs;
+    return cachedT_SC_ * rhs;
   }
 
   /// \brief Transform a homogenous point as hp_B = T_AB*hp_B (with rhs = hp_B).
   /// @param[in] rhs The right-hand side direction for this to be multiplied with.
   Eigen::Vector4d operator*(const Eigen::Vector4d & rhs) const override  {
-    return this->overallT() * rhs;
+    return cachedT_SC_ * rhs;
   }
 
   /// \brief Assignment -- copy. Takes care of proper caching.

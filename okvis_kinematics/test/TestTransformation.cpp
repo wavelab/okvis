@@ -155,14 +155,16 @@ TEST(Transformation, compositionJacobians) {
     T_AB_p.oplus(dp_p);
     const auto res_left = T_AB_p * T_BC;
     left_num_diff.block<3, 1>(0, i) = (res_left.r() - T_AC.r()) / dp;
-    // no minus operation, so implement minimal difference between quaternions here
-    left_num_diff.block<3, 1>(3, i) = okvis::kinematics::logMap(res_left.q() * T_AC.q().inverse()) / dp * 2;
+    // no minus operation, so implement minimal difference between quaternions
+    left_num_diff.block<3, 1>(3, i) =
+        okvis::kinematics::logMap(res_left.q() * T_AC.q().inverse()) / dp * 2;
 
 
     T_BC_p.oplus(dp_p);
     const auto res_right = T_AB * T_BC_p;
     right_num_diff.block<3, 1>(0, i) = (res_right.r() - T_AC.r()) / dp;
-    right_num_diff.block<3, 1>(3, i) = okvis::kinematics::logMap(res_right.q() * T_AC.q().inverse()) / dp * 2;
+    right_num_diff.block<3, 1>(3, i) =
+        okvis::kinematics::logMap(res_right.q() * T_AC.q().inverse()) / dp * 2;
   }
 
   EXPECT_LT((jacobian_left - left_num_diff).norm(), 1e-5);
@@ -170,36 +172,45 @@ TEST(Transformation, compositionJacobians) {
 }
 
 TEST(GimbalTransformation, constructDefault) {
-  okvis::kinematics::GimbalTransformation<3> T_SC;
+  okvis::kinematics::GimbalTransformation<2> T_SC;
   EXPECT_TRUE(T_SC.T().isIdentity(1e-8));
 }
 
-TEST(GimbalTransformation, constructFromDh) {
+TEST(GimbalTransformation, DISABLED_constructFromDh) {
   okvis::kinematics::Transformation T_SA, T_EC;
-  okvis::kinematics::DhParameters dh1, dh2, dh3;
+  okvis::kinematics::DhParameters dh1, dh2;
   T_SA.setRandom();
   T_EC.setRandom();
   dh1.setRandom();
   dh2.setRandom();
-  dh3.setRandom();
-  okvis::kinematics::GimbalTransformation<3> T_SC{T_SA, T_EC, dh1, dh2, dh3};
+  okvis::kinematics::GimbalTransformation<2> T_SC{T_SA, T_EC, dh1, dh2};
 
   okvis::kinematics::Transformation expected =
-      T_SA * transformationFromDh(dh1) * transformationFromDh(dh2) * transformationFromDh(dh3) * T_EC;
+      T_SA * transformationFromDh(dh1) * transformationFromDh(dh2) * T_EC;
 
   EXPECT_LT((T_SC.overallT().T() - expected.T()).norm(), 1e-8);
   EXPECT_LT((T_SC.T() - expected.T()).norm(), 1e-8);
 }
 
-TEST(GimbalTransformation, operations) {
-  TransformationTestFixture<okvis::kinematics::GimbalTransformation<3>, 3> fixture{};
+TEST(GimbalTransformation, basics) {
+  okvis::kinematics::GimbalTransformation<2> T_SC;
+  T_SC.setRandom();
+
+  EXPECT_TRUE(T_SC.q().isApprox(T_SC.overallT().q()));
+  EXPECT_TRUE(T_SC.r().isApprox(T_SC.overallT().r()));
+}
+
+TEST(GimbalTransformation, DISABLED_operations) {
+  TransformationTestFixture<
+      okvis::kinematics::GimbalTransformation<2>, 2> fixture{};
   for (size_t i = 0; i < 100; ++i) {
     fixture.testOperations();
   }
 }
 
 TEST(GimbalTransformation, DISABLED_oplus) {
-  TransformationTestFixture<okvis::kinematics::GimbalTransformation<3>, 3> fixture{};
+  TransformationTestFixture<
+      okvis::kinematics::GimbalTransformation<2>, 2> fixture{};
   for (size_t i = 0; i < 100; ++i) {
     fixture.testOplus();
   }
@@ -207,8 +218,9 @@ TEST(GimbalTransformation, DISABLED_oplus) {
 
 TEST(Transformation, testLogMap) {
   for (size_t i = 0; i < 100; ++i) {
+    // Quaterniond::UnitRandom is only in newer Eigen, so use Transformation
     okvis::kinematics::Transformation T;
-    T.setRandom();  // Quaterniond::UnitRandom is only in newer Eigen, so go through Transformation
+    T.setRandom();
     const auto q = T.q();
 
     const auto vec = okvis::kinematics::logMap(q);

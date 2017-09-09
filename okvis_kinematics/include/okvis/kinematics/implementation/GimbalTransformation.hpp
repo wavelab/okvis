@@ -85,17 +85,17 @@ Eigen::Matrix4d GimbalTransformation<N>::T() const {
 
 template <int N>
 const Eigen::Matrix3d & GimbalTransformation<N>::C() const {
-  return overallT().C();
+  return cachedT_SC_.C();
 }
 
 template <int N>
 const Eigen::Map<Eigen::Vector3d> & GimbalTransformation<N>::r() const  {
-  return overallT().r();
+  return cachedT_SC_.r();
 }
 
 template <int N>
 const Eigen::Map<Eigen::Quaterniond> & GimbalTransformation<N>::q() const  {
-  return overallT().q();
+  return cachedT_SC_.q();
 }
 
 template <int N>
@@ -127,7 +127,7 @@ void GimbalTransformation<N>::setRandom() {
 
 template <int N>
 Transformation GimbalTransformation<N>::inverse() const {
-  return overallT().inverse();
+  return cachedT_SC_.inverse();
 }
 
 template <int N>
@@ -166,7 +166,7 @@ bool GimbalTransformation<N>::oplusJacobian(
 
   // First, get the 7x6 Jacobian wrt the 6x1 delta obtained from the N joint angles and 3N constant DH parameters
   Eigen::Matrix<double, 7, 6> baseJacobian;
-  if (!overallT().oplusJacobian(baseJacobian)) {
+  if (!cachedT_SC_.oplusJacobian(baseJacobian)) {
     return false;
   }
 
