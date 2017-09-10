@@ -55,6 +55,10 @@ struct DhParameters
   double a = 0;      ///< Link length [m]
   double alpha = 0;  ///< Twist angle [rad]
 
+  DhParameters() = default;
+  DhParameters(double init_theta, double d, double a, double alpha) :
+      theta{init_theta}, d{d}, a{a}, alpha{alpha} {}
+
   /// \brief set parameters to random values with arbitrary bounds
   void setRandom() {
     Eigen::Vector4d r = Eigen::Vector4d::Random();

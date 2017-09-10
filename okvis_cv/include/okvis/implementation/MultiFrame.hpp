@@ -105,7 +105,7 @@ size_t MultiFrame::numFrames() const
   return frames_.size();
 }
 
-std::shared_ptr<const okvis::kinematics::Transformation> MultiFrame::T_SC(size_t cameraIdx) const {
+std::shared_ptr<const okvis::kinematics::TransformationBase> MultiFrame::T_SC(size_t cameraIdx) const {
   return cameraSystem_.T_SC(cameraIdx);
 }
 
@@ -122,7 +122,7 @@ void MultiFrame::setImage(size_t cameraIdx, const cv::Mat & image)
 }
 
 // Set the camera extrinsics
-void MultiFrame::setT_SC(size_t cameraIdx, std::shared_ptr<const okvis::kinematics::Transformation> T_SC) {
+void MultiFrame::setT_SC(size_t cameraIdx, std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC) {
   OKVIS_ASSERT_TRUE_DBG(Exception, cameraIdx < frames_.size(), "Out of range");
   cameraSystem_.setT_SC(cameraIdx, T_SC);
 }

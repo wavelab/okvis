@@ -50,7 +50,7 @@ NCameraSystem::NCameraSystem()
 }
 // Construct with vector of extrinsics and geometries
 NCameraSystem::NCameraSystem(
-    const std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> & T_SC,
+    const std::vector<std::shared_ptr<const okvis::kinematics::TransformationBase>> & T_SC,
     const std::vector<std::shared_ptr<const cameras::CameraBase>> & cameraGeometries,
     const std::vector<DistortionType>& distortionTypes,
     bool computeOverlaps)
@@ -76,7 +76,7 @@ NCameraSystem::~NCameraSystem()
 
 // Reset with vector of extrinsics and geometries
 void NCameraSystem::reset(
-    const std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> & T_SC,
+    const std::vector<std::shared_ptr<const okvis::kinematics::TransformationBase>> & T_SC,
     const std::vector<std::shared_ptr<const cameras::CameraBase>> & cameraGeometries,
     const std::vector<DistortionType>& distortionTypes,
     bool computeOverlaps)
@@ -100,7 +100,7 @@ void NCameraSystem::reset(
 
 // Reset with vector of extrinsics and geometries
 void NCameraSystem::addCamera(
-    std::shared_ptr<const okvis::kinematics::Transformation> T_SC,
+    std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC,
     std::shared_ptr<const cameras::CameraBase> cameraGeometry,
     DistortionType distortionType,
     bool computeOverlaps)
@@ -116,7 +116,7 @@ void NCameraSystem::addCamera(
 }
 
 // get the pose of the IMU frame S with respect to the camera cameraIndex
-std::shared_ptr<const okvis::kinematics::Transformation> NCameraSystem::T_SC(
+std::shared_ptr<const okvis::kinematics::TransformationBase> NCameraSystem::T_SC(
     size_t cameraIndex) const
 {
   OKVIS_ASSERT_TRUE_DBG(Exception, cameraIndex < T_SC_.size(),
@@ -125,7 +125,7 @@ std::shared_ptr<const okvis::kinematics::Transformation> NCameraSystem::T_SC(
 }
 
 void NCameraSystem::setT_SC(size_t cameraIndex,
-                            std::shared_ptr<const okvis::kinematics::Transformation> T_SC) {
+                            std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC) {
   T_SC_[cameraIndex] = T_SC;
 }
 

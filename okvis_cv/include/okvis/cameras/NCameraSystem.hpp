@@ -79,7 +79,7 @@ class NCameraSystem
   /// @param[in] cameraGeometries a vector of camera geometries (same length as T_SC).
   /// @param[in] distortionTypes a vector of distortion types (same length as T_SC).
   /// @param[in] computeOverlaps Indicate, if the overlap computation (can take a while) should be performed.
-  inline NCameraSystem(const std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> & T_SC,
+  inline NCameraSystem(const std::vector<std::shared_ptr<const okvis::kinematics::TransformationBase>> & T_SC,
                        const std::vector<std::shared_ptr<const cameras::CameraBase>> & cameraGeometries,
                        const std::vector<DistortionType>& distortionTypes,
                        bool computeOverlaps);
@@ -92,7 +92,7 @@ class NCameraSystem
   /// @param[in] cameraGeometries a vector of camera geometries (same length as T_SC).
   /// @param[in] distortionTypes a vector of distortion types (same length as T_SC).
   /// @param[in] computeOverlaps Indicate, if the overlap computation (can take a while) should be performed.
-  inline void reset(const std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> & T_SC,
+  inline void reset(const std::vector<std::shared_ptr<const okvis::kinematics::TransformationBase>> & T_SC,
                     const std::vector<std::shared_ptr<const cameras::CameraBase>> & cameraGeometries,
                     const std::vector<DistortionType>& distortionTypes,
                     bool computeOverlaps);
@@ -102,7 +102,7 @@ class NCameraSystem
   /// @param[in] cameraGeometry Camera geometry.
   /// @param[in] distortionType Distortion type.
   /// @param[in] computeOverlaps Indicate, if the overlap computation (can take a while) should be performed.
-  inline void addCamera(std::shared_ptr<const okvis::kinematics::Transformation> T_SC,
+  inline void addCamera(std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC,
                         std::shared_ptr<const cameras::CameraBase> cameraGeometry,
                         DistortionType distortionType,
                         bool computeOverlaps = true);
@@ -117,13 +117,13 @@ class NCameraSystem
   /// \brief get the pose of the IMU frame S with respect to the camera cameraIndex
   /// @param[in] cameraIndex The camera index for which the extrinsics should be returned.
   /// @return T_SC, the extrinsics.
-  inline std::shared_ptr<const okvis::kinematics::Transformation> T_SC(size_t cameraIndex) const;
+  inline std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC(size_t cameraIndex) const;
 
   /// \brief set the pose of the IMU frame S with respect to the camera cameraIndex
   /// @param[in] cameraIndex The camera index for which the extrinsics should be returned.
   /// @return T_SC, the extrinsics.
   /// @todo Re-calculate overlap
-  inline void setT_SC(size_t cameraIndex, std::shared_ptr<const okvis::kinematics::Transformation> T_SC);
+  inline void setT_SC(size_t cameraIndex, std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC);
 
   /// \brief get the camera geometry of camera cameraIndex
   /// @param[in] cameraIndex The camera index for which the camera geometry should be returned.
@@ -153,7 +153,7 @@ class NCameraSystem
   /// \brief Use this to check overlapMats_ and overlaps_ have correct sizes
   /// @return True, if valid.
   inline bool overlapComputationValid() const;
-  std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> T_SC_;  ///< Mounting transformations from IMU
+  std::vector<std::shared_ptr<const okvis::kinematics::TransformationBase>> T_SC_;  ///< Mounting transformations from IMU
   std::vector<std::shared_ptr<const cameras::CameraBase>> cameraGeometries_;  ///< Camera geometries
   std::vector<DistortionType> distortionTypes_;
   std::vector<std::vector<cv::Mat>> overlapMats_;  ///< Overlaps between cameras: mats

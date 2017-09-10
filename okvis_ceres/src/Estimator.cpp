@@ -230,22 +230,33 @@ bool Estimator::addStates(
       cameraInfos.at(CameraSensorStates::GimbalAngles).id = id;
     }
 
-    if (params.needsRelativeEstimation() && statesMap_.size() > 1) {
-      // use the same block...
-      cameraInfos.at(CameraSensorStates::T_SCi).id =
-          lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id;
-    } else {
-      // add a pose parameter block for T_SCi
-      const okvis::kinematics::Transformation T_SC = *multiFrame->T_SC(i);  // use this as estimate
-      uint64_t id = IdProvider::instance().newId();
-      std::shared_ptr<okvis::ceres::PoseParameterBlock> extrinsicsParameterBlockPtr(
-          new okvis::ceres::PoseParameterBlock(T_SC, id,
-                                               multiFrame->timestamp()));
-      if(!mapPtr_->addParameterBlock(extrinsicsParameterBlockPtr,ceres::Map::Pose6d)){
-        return false;
+    auto T_SC_as_gimbal = std::dynamic_pointer_cast<const okvis::kinematics::GimbalTransformation<2>>(multiFrame->T_SC(i));
+    auto T_SC_as_general = std::dynamic_pointer_cast<const okvis::kinematics::Transformation>(multiFrame->T_SC(i));
+
+    if(T_SC_as_gimbal) {
+      // We have a GimbalTransformation. optimize over the joint angles.
+      LOG(INFO) << "Optimizing over joint angles for camera " << i;
+      // @todo
+    } else if (T_SC_as_general) {
+      // Regular old transformation, optimize over rotation and translation
+      if (!params.needsRelativeEstimation() && statesMap_.size() > 1) {
+        // use the same block...
+        cameraInfos.at(CameraSensorStates::T_SCi).id =
+            lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id;
+      } else {
+        // add a pose parameter block for T_SCi
+        const okvis::kinematics::Transformation T_SC = *T_SC_as_general;  // use this as estimate
+        uint64_t id = IdProvider::instance().newId();
+        std::shared_ptr<okvis::ceres::PoseParameterBlock> extrinsicsParameterBlockPtr(
+            new okvis::ceres::PoseParameterBlock(T_SC, id,
+                                                 multiFrame->timestamp()));
+        if(!mapPtr_->addParameterBlock(extrinsicsParameterBlockPtr,ceres::Map::Pose6d)){
+          return false;
+        }
+        cameraInfos.at(CameraSensorStates::T_SCi).id = id;
       }
-      cameraInfos.at(CameraSensorStates::T_SCi).id = id;
     }
+
     // update the states info
     statesMap_.rbegin()->second.sensors.at(SensorStates::Camera).push_back(cameraInfos);
     states.sensors.at(SensorStates::Camera).push_back(cameraInfos);
@@ -280,25 +291,27 @@ bool Estimator::addStates(
     for (size_t i = 0; i < extrinsicsEstimationParametersVec_.size(); ++i) {
       const auto &params = extrinsicsEstimationParametersVec_.at(i);
 
-      if(params.needsRelativeEstimation()) {
+      auto T_SC_as_gimbal = std::dynamic_pointer_cast<const okvis::kinematics::GimbalTransformation<2>>(multiFrame->T_SC(i));
+      auto T_SC_as_general = std::dynamic_pointer_cast<const okvis::kinematics::Transformation>(multiFrame->T_SC(i));
 
-      }
+      if (T_SC_as_gimbal) {
 
-      if (params.needsAbsoluteEstimation()) {
-        const okvis::kinematics::Transformation T_SC = *multiFrame->T_SC(i);
-        std::shared_ptr<ceres::PoseError > cameraPoseError(
+      } else if(T_SC_as_general) {
+        if (params.needsAbsoluteEstimation()) {
+          const okvis::kinematics::Transformation T_SC = *T_SC_as_general;
+          std::shared_ptr<ceres::PoseError> cameraPoseError(
               new ceres::PoseError(T_SC, params.translationVariance(), params.rotationVariance()));
-        // add to map
-        mapPtr_->addResidualBlock(
-            cameraPoseError,
-            NULL,
-            mapPtr_->parameterBlockPtr(
-                states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id));
-        //mapPtr_->isJacobianCorrect(id,1.0e-6);
-      }
-      else {
-        mapPtr_->setParameterBlockConstant(
-            states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id);
+          // add to map
+          mapPtr_->addResidualBlock(
+              cameraPoseError,
+              NULL,
+              mapPtr_->parameterBlockPtr(
+                  states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id));
+          //mapPtr_->isJacobianCorrect(id,1.0e-6);
+        } else {
+          mapPtr_->setParameterBlockConstant(
+              states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id);
+        }
       }
     }
     for (size_t i = 0; i < imuParametersVec_.size(); ++i) {

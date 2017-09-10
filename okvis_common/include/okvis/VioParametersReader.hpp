@@ -103,7 +103,7 @@ class VioParametersReader{
   /// @brief Struct that contains all the camera calibration information.
   struct CameraCalibration {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    std::shared_ptr<okvis::kinematics::Transformation> T_SC;   ///< Transformation from camera to sensor (IMU) frame.
+    std::shared_ptr<okvis::kinematics::TransformationBase> T_SC; ///< Transformation from camera to sensor (IMU) frame.
     Eigen::Vector2d imageDimension;           ///< Image dimension. [pixels]
     Eigen::VectorXd distortionCoefficients;   ///< Distortion Coefficients.
     Eigen::Vector2d focalLength;              ///< Focal length.

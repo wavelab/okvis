@@ -331,7 +331,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
   size_t camIdx = 0;
   for (size_t i = 0; i < calibrations.size(); ++i) {
 
-    std::shared_ptr<const okvis::kinematics::Transformation> T_SC_okvis_ptr = calibrations[i].T_SC;
+    std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC_okvis_ptr = calibrations[i].T_SC;
 
     if (strcmp(calibrations[i].distortionType.c_str(), "equidistant") == 0) {
       vioParameters_.nCameraSystem.addCamera(
@@ -555,6 +555,16 @@ namespace {
         node[12], node[13], node[14], node[15];
     return true;
   }
+
+  // Helper to read dh parameters from a file node
+  bool nodeToDhParameters(const cv::FileNode& node,
+                          okvis::kinematics::DhParameters& dh) {
+    if (!(node.isSeq() && node.size() == 4)) {
+      return false;
+    }
+    dh = okvis::kinematics::DhParameters{node[0], node[1], node[2], node[3]};
+    return true;
+  }
 }
 
 bool VioParametersReader::getSingleCalibrationFromNode(
@@ -563,7 +573,6 @@ bool VioParametersReader::getSingleCalibrationFromNode(
   bool ok = cameraNode.isMap();
   if (!ok) return false;
 
-  cv::FileNode T_SC_node = cameraNode["T_SC"];
   cv::FileNode imageDimensionNode = cameraNode["image_dimension"];
   cv::FileNode distortionCoefficientNode = cameraNode["distortion_coefficients"];
   cv::FileNode distortionTypeNode = cameraNode["distortion_type"];
@@ -589,10 +598,28 @@ bool VioParametersReader::getSingleCalibrationFromNode(
   calib.distortionType = (std::string)(distortionTypeNode);
 
   // extrinsics
-  Eigen::Matrix4d T_SC;
-  ok *= nodeToMatrix4d(T_SC_node, T_SC);
-  calib.T_SC = std::make_shared<okvis::kinematics::Transformation>(T_SC);
-
+  // Currently one of two options: regular T_SC, or 2-axis gimbal
+  if (cameraNode["T_SA"].isSeq()
+      && cameraNode["T_EC"].isSeq()
+      && cameraNode["dh_parameters"].isSeq()
+      && cameraNode["dh_parameters"].size() == 2) {
+    Eigen::Matrix4d T_SA, T_EC;
+    okvis::kinematics::DhParameters dh1, dh2;
+    ok *= nodeToMatrix4d(cameraNode["T_SA"], T_SA);
+    ok *= nodeToMatrix4d(cameraNode["T_EC"], T_EC);
+    ok *= nodeToDhParameters(cameraNode["dh_parameters"][0], dh1);
+    ok *= nodeToDhParameters(cameraNode["dh_parameters"][1], dh2);
+    calib.T_SC = std::make_shared<okvis::kinematics::GimbalTransformation<2>>(
+        okvis::kinematics::Transformation{T_SA},
+        okvis::kinematics::Transformation{T_EC},
+        dh1,
+        dh2);
+  } else {
+    cv::FileNode T_SC_node = cameraNode["T_SC"];
+    Eigen::Matrix4d T_SC;
+    ok *= nodeToMatrix4d(T_SC_node, T_SC);
+    calib.T_SC = std::make_shared<okvis::kinematics::Transformation>(T_SC);
+  }
   return ok;
 }
 

@@ -104,7 +104,7 @@ struct ExtrinsicsEstimationParameters
 
   /** @brief true if online estimation must be updated over time */
   bool needsRelativeEstimation() const {
-    return (sigma_c_relative_translation < 1e-12) || (sigma_c_relative_orientation < 1e-12);
+    return (sigma_c_relative_translation > 1e-12) && (sigma_c_relative_orientation > 1e-12);
   }
 
   double translationVariance() const {

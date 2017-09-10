@@ -61,12 +61,12 @@ TEST(MulitFrame, functions)
   distortions.push_back(okvis::cameras::NCameraSystem::Equidistant);
 
   // the mounting transformations. The third one is opposite direction
-  std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> T_SC;
+  std::vector<std::shared_ptr<const okvis::kinematics::TransformationBase>> T_SC;
   T_SC.push_back(
       std::shared_ptr<okvis::kinematics::Transformation>(
           new okvis::kinematics::Transformation(Eigen::Vector3d(0.1, 0.1, 0.1),
                                                 Eigen::Quaterniond(1, 0, 0, 0))));
-  T_SC.push_back(
+  T_SC.pus h_back(
       std::shared_ptr<okvis::kinematics::Transformation>(
           new okvis::kinematics::Transformation(
               Eigen::Vector3d(0.1, -0.1, -0.1), Eigen::Quaterniond(1, 0, 0, 0))));
