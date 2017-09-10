@@ -47,6 +47,7 @@
 #include <okvis/cameras/EquidistantDistortion.hpp>
 #include <okvis/cameras/RadialTangentialDistortion.hpp>
 #include <okvis/cameras/RadialTangentialDistortion8.hpp>
+#include <okvis/kinematics/GimbalTransformation.hpp>
 
 #include <opencv2/core/core.hpp>
 
@@ -542,6 +543,20 @@ bool VioParametersReader::getCameraCalibration(
   return success;
 }
 
+namespace {
+  // Helper to read matrix from a file node
+  bool nodeToMatrix4d(const cv::FileNode& node, Eigen::Matrix4d& out) {
+    if (!(node.isSeq() && node.size() == 16)) {
+      return false;
+    }
+    out << node[0], node[1], node[2], node[3],
+        node[4],node[5], node[6], node[7],
+        node[8], node[9], node[10], node[11],
+        node[12], node[13], node[14], node[15];
+    return true;
+  }
+}
+
 bool VioParametersReader::getSingleCalibrationFromNode(
     const cv::FileNode& cameraNode,
     CameraCalibration& calib) const {
@@ -563,11 +578,7 @@ bool VioParametersReader::getSingleCalibrationFromNode(
       && principalPointNode.isSeq() && principalPointNode.size() == 2;
   if (!ok) return false;
 
-  // extrinsics
-  Eigen::Matrix4d T_SC;
-  T_SC << T_SC_node[0], T_SC_node[1], T_SC_node[2], T_SC_node[3], T_SC_node[4], T_SC_node[5], T_SC_node[6], T_SC_node[7], T_SC_node[8], T_SC_node[9], T_SC_node[10], T_SC_node[11], T_SC_node[12], T_SC_node[13], T_SC_node[14], T_SC_node[15];
-  calib.T_SC = std::make_shared<okvis::kinematics::Transformation>(T_SC);
-
+  // intrinsics
   calib.imageDimension << imageDimensionNode[0], imageDimensionNode[1];
   calib.distortionCoefficients.resize(distortionCoefficientNode.size());
   for(size_t i=0; i<distortionCoefficientNode.size(); ++i) {
@@ -576,6 +587,11 @@ bool VioParametersReader::getSingleCalibrationFromNode(
   calib.focalLength << focalLengthNode[0], focalLengthNode[1];
   calib.principalPoint << principalPointNode[0], principalPointNode[1];
   calib.distortionType = (std::string)(distortionTypeNode);
+
+  // extrinsics
+  Eigen::Matrix4d T_SC;
+  ok *= nodeToMatrix4d(T_SC_node, T_SC);
+  calib.T_SC = std::make_shared<okvis::kinematics::Transformation>(T_SC);
 
   return ok;
 }
