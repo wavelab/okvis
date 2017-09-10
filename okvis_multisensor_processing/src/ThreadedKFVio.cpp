@@ -183,7 +183,7 @@ ThreadedKFVio::~ThreadedKFVio() {
 // Add a new image.
 bool ThreadedKFVio::addImage(const okvis::Time & stamp, size_t cameraIndex,
                              const cv::Mat & image,
-                             const std::shared_ptr<const okvis::kinematics::Transformation> & T_SC,
+                             const std::shared_ptr<const okvis::kinematics::TransformationBase> & T_SC,
                              const std::vector<cv::KeyPoint> * keypoints,
                              bool* /*asKeyframe*/) {
   assert(cameraIndex<numCameras_);

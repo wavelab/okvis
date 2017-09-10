@@ -94,6 +94,11 @@ class Transformation : public TransformationBase
   ///        of not doing bad stuff with internal caching.
   Transformation(Transformation && other);
 
+  /// \brief Convert to simple Transformation type  (for compatibility with interface)
+  explicit operator Transformation() const {
+    return *this;
+  }
+
   /// \brief Construct from a translation and quaternion.
   /// @param[in] r_AB The translation r_AB (represented in frame A).
   /// @param[in] q_AB The Quaternion q_AB (as an Eigen Quaternion).

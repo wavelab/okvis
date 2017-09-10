@@ -66,7 +66,7 @@ TEST(MulitFrame, functions)
       std::shared_ptr<okvis::kinematics::Transformation>(
           new okvis::kinematics::Transformation(Eigen::Vector3d(0.1, 0.1, 0.1),
                                                 Eigen::Quaterniond(1, 0, 0, 0))));
-  T_SC.pus h_back(
+  T_SC.push_back(
       std::shared_ptr<okvis::kinematics::Transformation>(
           new okvis::kinematics::Transformation(
               Eigen::Vector3d(0.1, -0.1, -0.1), Eigen::Quaterniond(1, 0, 0, 0))));

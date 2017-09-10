@@ -140,7 +140,7 @@ class VioInterface {
    */
   virtual bool addImage(const okvis::Time & stamp, size_t cameraIndex,
                         const cv::Mat & image,
-                        const std::shared_ptr<const okvis::kinematics::Transformation> & T_SC = nullptr,
+                        const std::shared_ptr<const okvis::kinematics::TransformationBase> & T_SC = nullptr,
                         const std::vector<cv::KeyPoint> * keypoints = 0,
                         bool* asKeyframe = 0) = 0;
 

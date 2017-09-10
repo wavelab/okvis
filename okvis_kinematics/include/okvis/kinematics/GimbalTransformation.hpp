@@ -73,6 +73,11 @@ class GimbalTransformation : public TransformationBase {
   template <typename... DhArgs>
   GimbalTransformation(Transformation T_SA, Transformation T_EC, DhArgs... dh);
 
+  /// \brief Convert to simple Transformation type
+  explicit operator Transformation() const override {
+    return this->cachedT_SC_;
+  }
+
   /// \brief Parameter setting, all 7.
   /// \tparam Derived_coeffs Deducible matrix type.
   /// @param[in] parameters The parameters as theta angles in radians.

@@ -164,7 +164,7 @@ typedef std::deque<ImuMeasurement, Eigen::aligned_allocator<ImuMeasurement> > Im
 /// \brief Camera measurement.
 struct CameraData {
   cv::Mat image;  ///< Image.
-  std::shared_ptr<const okvis::kinematics::Transformation> T_SC; ///< Camera extrinsics at time of measurement
+  std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC; ///< Camera extrinsics at time of measurement
   std::vector<cv::KeyPoint> keypoints; ///< Keypoints if available.
   bool deliversKeypoints; ///< Are the keypoints delivered too?
 };

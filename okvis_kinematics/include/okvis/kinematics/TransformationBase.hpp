@@ -98,6 +98,9 @@ class TransformationBase
   /// \brief Transform a homogenous point as hp_B = T_AB*hp_B (with rhs = hp_B).
   /// @param[in] rhs The right-hand side direction for this to be multiplied with.
   virtual Eigen::Vector4d operator*(const Eigen::Vector4d & rhs) const = 0;
+
+  /// \brief Convert to simple Transformation type
+  virtual operator Transformation() const = 0;
 };
 
 }  // namespace kinematics
