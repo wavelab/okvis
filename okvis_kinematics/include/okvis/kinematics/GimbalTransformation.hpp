@@ -189,9 +189,9 @@ class GimbalTransformation : public TransformationBase {
 
   /// Cache of intermediate transformations. cache_T[a, b] is the transform from the ath to (a+b+1)th frame
   /// cached_T[0, 0] is T_SA, cached_T[1, 0] is T_AL(1), cached_T[0,N+1] is T_SC
-  /// Only forward transformations are stored, and no transformation ending in C is stored
+  /// Only forward transformations are stored
   std::array<std::vector<okvis::kinematics::Transformation,
-                         Eigen::aligned_allocator<okvis::kinematics::Transformation>>, N + 1> cached_T;
+                         Eigen::aligned_allocator<okvis::kinematics::Transformation>>, N + 2> cached_T;
 };
 
 }  // namespace kinematics

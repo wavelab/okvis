@@ -160,24 +160,28 @@ bool GimbalTransformation<N>::oplusMinimalJacobian(
   using Scalar = typename Derived_jacobian::Scalar;
 
   // Each DH link affects only column of the jacobian
-  // For each link i the jacobian wrt theta_i is
-  //   dp_SC/dp_Si * dp_Si / dp_(i-1)i * dp_(i-1)i / dtheta
   for (auto i = 0; i < N; ++i) {
-
-    // Here L = frame after link i, K = frame before link i
-    const auto& T_SC = cachedT_SC_;
+    // Let L = frame after link i, K = frame before link i
+    // Holding all except theta_i constant, the transform can be written as
+    //   T_SC = T_SK * T_KL(theta_i) * T_LC
+    // The derivative is
+    //   dT_SC/dT_SL * dT_SL/dT_KL *dT_KL/dtheta
+    const auto& T_LC = cached_T[i + 2].back();
+    const auto& T_SK = cached_T[0][i];
     const auto& T_SL = cached_T[0][i + 1];
     const auto& T_KL = cached_T[i + 1][0];
 
-    Eigen::Matrix<Scalar, 6, 6> Jleft_SC_SL;
-    Eigen::Matrix<Scalar, 6, 6> Jright_SL_KL;
+    Eigen::Matrix<Scalar, 6, 6> J_SC_SL;
+    Eigen::Matrix<Scalar, 6, 6> J_SL_KL;
     Eigen::Matrix<Scalar, 6, 1> J_KL_theta;
 
-    T_SC.composeLeftJacobian(T_SL, Jleft_SC_SL);
-    T_SL.composeRightJacobian(T_KL, Jright_SL_KL);
+    // dT_SC/dT_SL is the jacobian of T_SL * T_LC w.r.t. the left
+    T_SL.composeLeftJacobian(T_LC, J_SC_SL);
+    // dT_SL/dT_KL is the jacobian of T_SK * T_KL w.r.t. the right
+    T_SK.composeRightJacobian(T_KL, J_SL_KL);
     dhChain_[i].thetaMinimalJacobian(J_KL_theta);
 
-    J_SC_theta.col(i) = Jleft_SC_SL * Jright_SL_KL * J_KL_theta;
+    J_SC_theta.col(i) = J_SC_SL * J_SL_KL * J_KL_theta;
   }
   return true;
 }
@@ -190,13 +194,13 @@ bool GimbalTransformation<N>::oplusJacobian(
   auto &J_SC_theta = const_cast<Eigen::MatrixBase<Derived_jacobian> &>(jacobian);
   using Scalar = typename Derived_jacobian::Scalar;
 
-  // First, get the 6xN Jacobian wrt thetha
+  // First, get the 6xN Jacobian wrt theta
   Eigen::Matrix<Scalar, 6, N> J_min_theta;
   if (!this->oplusMinimalJacobian(J_min_theta)) {
     return false;
   }
 
-  // Then convert to 7x6 using chain rule
+  // Then obtain 7x6 using chain rule
   Eigen::Matrix<Scalar, 7, 6> J_SC_min;
   if (!cachedT_SC_.oplusJacobian(J_SC_min)) {
     return false;
@@ -217,8 +221,8 @@ bool GimbalTransformation<N>::liftJacobian(const Eigen::MatrixBase<Derived_jacob
 // This method resizes the cache. It should not be resized elsewhere
 template <int N>
 void GimbalTransformation<N>::initCache() {
-  for (auto i = 0; i < N + 1; ++i) {
-    const auto num = N + 1 - i;  // number of cached transforms up to E
+  for (auto i = 0; i < N + 2; ++i) {
+    const auto num = N + 2 - i;  // number of cached transforms up to C
     cached_T[i].resize(num);
   }
 }
@@ -235,17 +239,18 @@ void GimbalTransformation<N>::updateCache() {
   for (auto link = 0; link < N; ++link) {
     cached_T[link + 1][0] = transformationFromDh(dhChain_[link]);
   }
+  cached_T[N + 1][0] = T_EC_;
 
   // Calculate transforms spaced by 2, then 3, and so on
-  for (auto jump = 2; jump <= N + 1; ++jump) {
-    for (auto start = 0; start <= N + 1 - jump; ++start) {
+  for (auto jump = 2; jump <= N + 2; ++jump) {
+    for (auto start = 0; start <= N + 2 - jump; ++start) {
       const auto end = start + jump;
       cached_T[start][jump - 1] = cached_T[start][jump - 2] * cached_T[end - 1][0];
     }
   }
 
-  // Calculate T_SC = T_SE * T_EC
-  cachedT_SC_ = cached_T.front().back() * T_EC_;
+  // Store T_SC for convenience
+  cachedT_SC_ = cached_T.front().back();
 }
 
 }  // namespace kinematics
