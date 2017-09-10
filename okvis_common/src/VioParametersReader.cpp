@@ -330,9 +330,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
   size_t camIdx = 0;
   for (size_t i = 0; i < calibrations.size(); ++i) {
 
-    std::shared_ptr<const okvis::kinematics::Transformation> T_SC_okvis_ptr(
-          new okvis::kinematics::Transformation(calibrations[i].T_SC.r(),
-                                                calibrations[i].T_SC.q().normalized()));
+    std::shared_ptr<const okvis::kinematics::Transformation> T_SC_okvis_ptr = calibrations[i].T_SC;
 
     if (strcmp(calibrations[i].distortionType.c_str(), "equidistant") == 0) {
       vioParameters_.nCameraSystem.addCamera(
@@ -353,7 +351,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
                     calibrations[i].distortionCoefficients[3])/*, id ?*/)),
           okvis::cameras::NCameraSystem::Equidistant/*, computeOverlaps ?*/);
       std::stringstream s;
-      s << calibrations[i].T_SC.T();
+      s << calibrations[i].T_SC->T();
       LOG(INFO) << "Equidistant pinhole camera " << camIdx
                 << " with T_SC=\n" << s.str();
     } else if (strcmp(calibrations[i].distortionType.c_str(), "radialtangential") == 0
@@ -376,7 +374,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
                     calibrations[i].distortionCoefficients[3])/*, id ?*/)),
           okvis::cameras::NCameraSystem::RadialTangential/*, computeOverlaps ?*/);
       std::stringstream s;
-      s << calibrations[i].T_SC.T();
+      s << calibrations[i].T_SC->T();
       LOG(INFO) << "Radial tangential pinhole camera " << camIdx
                 << " with T_SC=\n" << s.str();
     } else if (strcmp(calibrations[i].distortionType.c_str(), "radialtangential8") == 0
@@ -403,7 +401,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
                     calibrations[i].distortionCoefficients[7])/*, id ?*/)),
           okvis::cameras::NCameraSystem::RadialTangential8/*, computeOverlaps ?*/);
       std::stringstream s;
-      s << calibrations[i].T_SC.T();
+      s << calibrations[i].T_SC->T();
       LOG(INFO) << "Radial tangential 8 pinhole camera " << camIdx
                 << " with T_SC=\n" << s.str();
     } else {
@@ -544,70 +542,69 @@ bool VioParametersReader::getCameraCalibration(
   return success;
 }
 
+bool VioParametersReader::getSingleCalibrationFromNode(
+    const cv::FileNode& cameraNode,
+    CameraCalibration& calib) const {
+  bool ok = cameraNode.isMap();
+  if (!ok) return false;
+
+  cv::FileNode T_SC_node = cameraNode["T_SC"];
+  cv::FileNode imageDimensionNode = cameraNode["image_dimension"];
+  cv::FileNode distortionCoefficientNode = cameraNode["distortion_coefficients"];
+  cv::FileNode distortionTypeNode = cameraNode["distortion_type"];
+  cv::FileNode focalLengthNode = cameraNode["focal_length"];
+  cv::FileNode principalPointNode = cameraNode["principal_point"];
+
+  // Check that the nodes are correct
+  ok *= imageDimensionNode.isSeq() && imageDimensionNode.size() == 2
+      && distortionCoefficientNode.isSeq() && distortionCoefficientNode.size() == 4
+      && distortionTypeNode.isString()
+      && focalLengthNode.isSeq() && focalLengthNode.size() == 2
+      && principalPointNode.isSeq() && principalPointNode.size() == 2;
+  if (!ok) return false;
+
+  // extrinsics
+  Eigen::Matrix4d T_SC;
+  T_SC << T_SC_node[0], T_SC_node[1], T_SC_node[2], T_SC_node[3], T_SC_node[4], T_SC_node[5], T_SC_node[6], T_SC_node[7], T_SC_node[8], T_SC_node[9], T_SC_node[10], T_SC_node[11], T_SC_node[12], T_SC_node[13], T_SC_node[14], T_SC_node[15];
+  calib.T_SC = std::make_shared<okvis::kinematics::Transformation>(T_SC);
+
+  calib.imageDimension << imageDimensionNode[0], imageDimensionNode[1];
+  calib.distortionCoefficients.resize(distortionCoefficientNode.size());
+  for(size_t i=0; i<distortionCoefficientNode.size(); ++i) {
+    calib.distortionCoefficients[i] = distortionCoefficientNode[i];
+  }
+  calib.focalLength << focalLengthNode[0], focalLengthNode[1];
+  calib.principalPoint << principalPointNode[0], principalPointNode[1];
+  calib.distortionType = (std::string)(distortionTypeNode);
+
+  return ok;
+}
+
 // Get the camera calibration via the configuration file.
 bool VioParametersReader::getCalibrationViaConfig(
     std::vector<CameraCalibration,Eigen::aligned_allocator<CameraCalibration>> & calibrations,
-    cv::FileNode cameraNode) const {
+    cv::FileNode camerasNode) const {
 
   calibrations.clear();
-  bool gotCalibration = false;
-  // first check if calibration is available in config file
-  if (cameraNode.isSeq()
-     && cameraNode.size() > 0) {
+  bool gotCalibration = true;
+  // first check if calibrations are available in config file
+  if (! (camerasNode.isSeq() && camerasNode.size() > 0)) {
+    LOG(INFO) << "Did not find a calibration in the configuration file.";
+    gotCalibration = false;
+  } else {
     size_t camIdx = 0;
-    for (cv::FileNodeIterator it = cameraNode.begin();
-        it != cameraNode.end(); ++it) {
-      if ((*it).isMap()
-          && (*it)["T_SC"].isSeq()
-          && (*it)["image_dimension"].isSeq()
-          && (*it)["image_dimension"].size() == 2
-          && (*it)["distortion_coefficients"].isSeq()
-          && (*it)["distortion_coefficients"].size() >= 4
-          && (*it)["distortion_type"].isString()
-          && (*it)["focal_length"].isSeq()
-          && (*it)["focal_length"].size() == 2
-          && (*it)["principal_point"].isSeq()
-          && (*it)["principal_point"].size() == 2) {
+    for (cv::FileNodeIterator it = camerasNode.begin();
+         it != camerasNode.end(); ++it, ++camIdx) {
+      CameraCalibration calib;
+      gotCalibration = getSingleCalibrationFromNode(*it, calib);
+      if (gotCalibration) {
         LOG(INFO) << "Found calibration in configuration file for camera " << camIdx;
-        gotCalibration = true;
+        calibrations.push_back(calib);
       } else {
         LOG(WARNING) << "Found incomplete calibration in configuration file for camera " << camIdx
                      << ". Will not use the calibration from the configuration file.";
-        return false;
+        break;
       }
-      ++camIdx;
-    }
-  }
-  else
-    LOG(INFO) << "Did not find a calibration in the configuration file.";
-
-  if (gotCalibration) {
-    for (cv::FileNodeIterator it = cameraNode.begin();
-        it != cameraNode.end(); ++it) {
-
-      CameraCalibration calib;
-
-      cv::FileNode T_SC_node = (*it)["T_SC"];
-      cv::FileNode imageDimensionNode = (*it)["image_dimension"];
-      cv::FileNode distortionCoefficientNode = (*it)["distortion_coefficients"];
-      cv::FileNode focalLengthNode = (*it)["focal_length"];
-      cv::FileNode principalPointNode = (*it)["principal_point"];
-
-      // extrinsics
-      Eigen::Matrix4d T_SC;
-      T_SC << T_SC_node[0], T_SC_node[1], T_SC_node[2], T_SC_node[3], T_SC_node[4], T_SC_node[5], T_SC_node[6], T_SC_node[7], T_SC_node[8], T_SC_node[9], T_SC_node[10], T_SC_node[11], T_SC_node[12], T_SC_node[13], T_SC_node[14], T_SC_node[15];
-      calib.T_SC = okvis::kinematics::Transformation(T_SC);
-
-      calib.imageDimension << imageDimensionNode[0], imageDimensionNode[1];
-      calib.distortionCoefficients.resize(distortionCoefficientNode.size());
-      for(size_t i=0; i<distortionCoefficientNode.size(); ++i) {
-        calib.distortionCoefficients[i] = distortionCoefficientNode[i];
-      }
-      calib.focalLength << focalLengthNode[0], focalLengthNode[1];
-      calib.principalPoint << principalPointNode[0], principalPointNode[1];
-      calib.distortionType = (std::string)((*it)["distortion_type"]);
-
-      calibrations.push_back(calib);
     }
   }
   return gotCalibration;

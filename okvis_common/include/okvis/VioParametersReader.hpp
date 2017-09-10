@@ -103,7 +103,7 @@ class VioParametersReader{
   /// @brief Struct that contains all the camera calibration information.
   struct CameraCalibration {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    okvis::kinematics::Transformation T_SC;   ///< Transformation from camera to sensor (IMU) frame.
+    std::shared_ptr<okvis::kinematics::Transformation> T_SC;   ///< Transformation from camera to sensor (IMU) frame.
     Eigen::Vector2d imageDimension;           ///< Image dimension. [pixels]
     Eigen::VectorXd distortionCoefficients;   ///< Distortion Coefficients.
     Eigen::Vector2d focalLength;              ///< Focal length.
@@ -139,14 +139,24 @@ class VioParametersReader{
       cv::FileStorage& configurationFile);
 
   /**
+   * @brief Get a single camera calibration from a configuration file node
+   * @param[in] cameraNode File node pointing to the camera map
+   * @param[out] calib Read calibration.
+   * @return True if reading and parsing of calibration was successful.
+   */
+  bool getSingleCalibrationFromNode(
+      const cv::FileNode& cameraNode,
+      CameraCalibration& calib) const;
+
+  /**
    * @brief Get the camera calibration via the configuration file.
    * @param[out] calibrations Read calibration.
-   * @param[in] cameraNode File node pointing to the cameras sequence.
+   * @param[in] camerasNode File node pointing to the cameras sequence.
    * @return True if reading and parsing of calibration was successful.
    */
   bool getCalibrationViaConfig(
       std::vector<CameraCalibration,Eigen::aligned_allocator<CameraCalibration>> & calibrations,
-      cv::FileNode cameraNode) const;
+      cv::FileNode camerasNode) const;
 
   /**
    * @brief Get the camera calibrations via the visensor API.
