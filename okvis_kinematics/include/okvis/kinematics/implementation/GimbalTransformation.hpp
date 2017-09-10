@@ -214,7 +214,7 @@ template <int N>
 template<typename Derived_jacobian>
 bool GimbalTransformation<N>::liftJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
   EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, N, 7);
-  const_cast<Eigen::MatrixBase<Derived_jacobian>&>(jacobian).setIdentity();
+  // Not implemented
   return false;
 }
 
