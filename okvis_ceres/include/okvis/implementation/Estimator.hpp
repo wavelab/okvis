@@ -45,6 +45,7 @@ template<class GEOMETRY_TYPE>
                                                    uint64_t poseId,
                                                    size_t camIdx,
                                                    size_t keypointIdx) {
+  LOG(INFO) << "Adding observation of landmark " << landmarkId << " at " << poseId << ", cam " << camIdx;
   OKVIS_ASSERT_TRUE_DBG(Exception, isLandmarkAdded(landmarkId),
                         "landmark not added");
 
@@ -85,6 +86,8 @@ template<class GEOMETRY_TYPE>
   landmarksMap_.at(landmarkId).observations.insert(
       std::pair<okvis::KeypointIdentifier, uint64_t>(
           kid, reinterpret_cast<uint64_t>(retVal)));
+
+  LOG(INFO) << "Done adding observation of landmark " << landmarkId << " at " << poseId;
 
   return retVal;
 }

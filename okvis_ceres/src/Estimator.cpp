@@ -366,8 +366,19 @@ bool Estimator::addStates(
 
     // add relative sensor state errors
     for (size_t i = 0; i < extrinsicsEstimationParametersVec_.size(); ++i) {
-      if(lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id !=
-          states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id){
+      const auto& lastCameraState = lastElementIterator->second.sensors.at(SensorStates::Camera).at(i);
+      const auto& cameraState = states.sensors.at(SensorStates::Camera).at(i);
+
+      // dynamic camera extension
+      if(cameraState.at(CameraSensorStates::GimbalAngles).exists &&
+          lastCameraState.at(CameraSensorStates::GimbalAngles).id !=
+              cameraState.at(CameraSensorStates::GimbalAngles).id) {
+        // @todo?
+      }
+
+      if(cameraState.at(CameraSensorStates::T_SCi).exists &&
+          lastCameraState.at(CameraSensorStates::T_SCi).id !=
+              cameraState.at(CameraSensorStates::T_SCi).id) {
         // i.e. they are different estimated variables, so link them with a temporal error term
         double dt = (states.timestamp - lastElementIterator->second.timestamp)
             .toSec();
@@ -1075,7 +1086,7 @@ bool Estimator::getCameraSensorStates(
     res *= (T_SC != nullptr);
     if (res) {
       auto new_T_SC = *T_SC;
-      LOG(INFO) << "TSCi: setting parameters from " << T_SCi.parameters().transpose() << " to " << thetas.transpose();
+      LOG(INFO) << "TSCi: setting parameters from " << new_T_SC.parameters().transpose() << " to " << thetas.transpose();
       new_T_SC.setParameters(thetas);
       T_SCi = new_T_SC.overallT();
     }

@@ -62,7 +62,7 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
   /// \brief The number of residuals (N).
   static const int kNumResiduals = N;
 
-  /// \brief The information matrix type (6x6) (of the pose measurement)
+  /// \brief The information matrix type (6x6)
   typedef Eigen::Matrix<double, 6, 6> information_t;
 
   /// \brief The covariance matrix type (same as information).
@@ -71,19 +71,12 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
   /// \brief No default constructor.
   GimbalAnglesError() = delete;
 
-  /// \brief Construct with measurement and information matrix.
-  /// @param[in] measurement The measurement.
-  /// @param[in] information The information (weight) matrix.
-  GimbalAnglesError(
-      const okvis::kinematics::GimbalTransformation<N> &measurement,
-      const information_t & information);
-
   /// \brief Construct with measurement and variance.
   /// @param[in] measurement The measurement.
-  /// @param[in] variance The rotation variance.
+  /// @param[in] theta_variance The joint angle variance.
   GimbalAnglesError(
       const okvis::kinematics::GimbalTransformation<N> &measurement,
-      double variance);
+      double theta_variance);
 
   /// \brief Trivial destructor.
   virtual ~GimbalAnglesError() = default;
@@ -97,9 +90,9 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
     measurement_ = measurement;
   }
 
-  /// \brief Set the information.
-  /// @param[in] information The information (weight) matrix.
-  void setInformation(const information_t & information);
+  /// \brief Store the information and covariance, given covariance.
+  /// @param[in] covariance The information (weight) matrix.
+  void setCovariance(const covariance_t &covariance);
 
   /// \}
   /// \name Getters
@@ -109,12 +102,6 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
   /// \return The measurement vector.
   const okvis::kinematics::Transformation& measurement() const {
     return measurement_;
-  }
-
-  /// \brief Get the information matrix.
-  /// \return The information (weight) matrix.
-  const information_t& information() const {
-    return information_;
   }
 
   /// \brief Get the covariance matrix.
@@ -176,7 +163,7 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
   okvis::kinematics::GimbalTransformation<N> measurement_; ///< The pose measurement.
 
   // weighting related
-  information_t information_; ///< The 6x6 information matrix.
+
   information_t squareRootInformation_; ///< The 6x6 square root information matrix.
   covariance_t covariance_; ///< The 6x6 covariance matrix.
 

@@ -41,7 +41,7 @@
 #ifndef INCLUDE_OKVIS_FRAME_HPP_
 #define INCLUDE_OKVIS_FRAME_HPP_
 
-#include <Eigen/StdVector>
+// #include <Eigen/StdVector> // not needed in c++11
 #include <Eigen/Core>
 #include <memory>
 #pragma GCC diagnostic push

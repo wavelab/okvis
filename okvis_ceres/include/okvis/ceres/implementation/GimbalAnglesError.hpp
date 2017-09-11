@@ -43,34 +43,31 @@ namespace okvis {
 /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
 namespace ceres {
 
-// Construct with measurement and information matrix.
-template <int N>
-GimbalAnglesError<N>::GimbalAnglesError(
-    const okvis::kinematics::GimbalTransformation<N> &measurement,
-    const information_t & information)  {
-  setMeasurement(measurement);
-  setInformation(information);
-}
-
 // Construct with measurement and variance.
 template <int N>
 GimbalAnglesError<N>::GimbalAnglesError(
     const okvis::kinematics::GimbalTransformation<N> &measurement,
-    double variance) {
+    double theta_variance) {
   setMeasurement(measurement);
-  information_t information;
-  information = covariance_t::Identity() * 1.0 / variance;
-  setInformation(information);
+  // @todo avoid config file mishaps
+  if (theta_variance == 0) {
+    LOG(FATAL) << "GimbalAnglesError() called with theta_variance == 0. Set some absolute translation variance.";
+  }
+
+  // Calculate information of measurement, given variance of the parameters
+  Eigen::Matrix<double, 6, N> J;
+  measurement.oplusMinimalJacobian(J);  // jacobian of pose measurement wrt parameters
+
+  Eigen::Matrix<double, N, N> theta_cov = Eigen::Matrix<double, N, N>::Identity() * theta_variance;
+  setCovariance(J * theta_cov * J.transpose());
 }
 
 // Set the information.
 template <int N>
-void GimbalAnglesError<N>::setInformation(const information_t & information) {
-  information_ = information;
-  covariance_ = information.inverse();
+void GimbalAnglesError<N>::setCovariance(const covariance_t &covariance) {
+  covariance_ = covariance;
   // perform the Cholesky decomposition on order to obtain the correct error weighting
-  Eigen::LLT<information_t> lltOfInformation(information_);
-  squareRootInformation_ = lltOfInformation.matrixL().transpose();
+  squareRootInformation_ = covariance_t{covariance.llt().matrixL()}.inverse();
 }
 
 // This evaluates the error term and additionally computes the Jacobians.
@@ -103,7 +100,10 @@ bool GimbalAnglesError<N>::EvaluateWithMinimalJacobians(double const* const * pa
 
   // weigh it
   Eigen::Map<Eigen::Matrix<double, 6, 1> > weighted_error(residuals);
-  weighted_error = squareRootInformation_ * error;
+  // @todo! weigh error properly
+  // currently covariance is singular and squareRootInformation is not usable
+  // weighted_error = squareRootInformation_ * error;
+  weighted_error = error;
 
   // compute Jacobian
   if (jacobians && jacobians[0]) {
