@@ -197,17 +197,21 @@ bool Estimator::addStates(
     const auto &params = extrinsicsEstimationParametersVec_.at(i);
 
     SpecificSensorStatesContainer cameraInfos(2);
-    cameraInfos.at(CameraSensorStates::T_SCi).exists=true;
     cameraInfos.at(CameraSensorStates::Intrinsics).exists=false;
 
+
+    auto T_SC_as_gimbal = std::dynamic_pointer_cast<const okvis::kinematics::GimbalTransformation<2>>(multiFrame->T_SC(i));
+    auto T_SC_as_general = std::dynamic_pointer_cast<const okvis::kinematics::Transformation>(multiFrame->T_SC(i));
+
     // Dynamic camera extension
-    if (params.needsDhEstimation()) {
+    if (T_SC_as_gimbal) {
+      // We have a GimbalTransformation. optimize over the joint angles.
+      LOG(INFO) << "Optimizing over joint angles for camera " << i;
+
       cameraInfos.at(CameraSensorStates::GimbalAngles).exists = true;
 
-      // add a pose parameter block for the gimbal angles
+      // add a pose parameter block for the gimbal angless
       // @todo generalize to other sizes of chain
-//      OKVIS_ASSERT_TRUE(Exception, params.dh_chain_AE.size() == 2, "only 2-joint gimbals are supported for now");
-
       Eigen::Vector2d estimate;
       if (statesMap_.size() > 1) {
         // use previous value as estimate
@@ -218,27 +222,20 @@ bool Estimator::addStates(
         estimate = last_angles_ptr->estimate();
       } else {
         // use initial value from parameters as estimate
-        estimate = params.dhThetaInitialValues();
+        estimate = T_SC_as_gimbal->parameters();
       }
 
       const auto id = IdProvider::instance().newId();
       auto anglesBlockPtr = std::make_shared<okvis::ceres::AnglesParameterBlock<2>>(
           estimate, id, multiFrame->timestamp());
+      // add the angles parameter block. "Trivial" means there is no local parametrization for the angles themselves
       if (!mapPtr_->addParameterBlock(anglesBlockPtr, ceres::Map::Trivial)) {
         return false;
       }
       cameraInfos.at(CameraSensorStates::GimbalAngles).id = id;
-    }
-
-    auto T_SC_as_gimbal = std::dynamic_pointer_cast<const okvis::kinematics::GimbalTransformation<2>>(multiFrame->T_SC(i));
-    auto T_SC_as_general = std::dynamic_pointer_cast<const okvis::kinematics::Transformation>(multiFrame->T_SC(i));
-
-    if(T_SC_as_gimbal) {
-      // We have a GimbalTransformation. optimize over the joint angles.
-      LOG(INFO) << "Optimizing over joint angles for camera " << i;
-      // @todo
     } else if (T_SC_as_general) {
       // Regular old transformation, optimize over rotation and translation
+      cameraInfos.at(CameraSensorStates::T_SCi).exists=true;
       if (!params.needsRelativeEstimation() && statesMap_.size() > 1) {
         // use the same block...
         cameraInfos.at(CameraSensorStates::T_SCi).id =
@@ -295,7 +292,20 @@ bool Estimator::addStates(
       auto T_SC_as_general = std::dynamic_pointer_cast<const okvis::kinematics::Transformation>(multiFrame->T_SC(i));
 
       if (T_SC_as_gimbal) {
-
+        if (params.needsDhEstimation())  {
+          auto gimbalError = std::make_shared<ceres::GimbalAnglesError<2>>(
+              *T_SC_as_gimbal, params.rotationVariance());
+          // add to map
+          mapPtr_->addResidualBlock(
+              gimbalError,
+              NULL,
+              mapPtr_->parameterBlockPtr(
+                  states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::GimbalAngles).id));
+          //mapPtr_->isJacobianCorrect(id,1.0e-6);
+        } else {
+          mapPtr_->setParameterBlockConstant(
+              states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::GimbalAngles).id);
+        }
       } else if(T_SC_as_general) {
         if (params.needsAbsoluteEstimation()) {
           const okvis::kinematics::Transformation T_SC = *T_SC_as_general;

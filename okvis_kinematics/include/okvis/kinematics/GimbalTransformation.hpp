@@ -58,7 +58,7 @@ namespace kinematics {
  *
  * This transform is composed of
  *   - T_SA, static transform from S to the base of the kinematic chain (A)
- *   - `N` sets of four DH parameters, together comprising T_AE
+ *   - `N` sets of four DH parameters, together composing T_AE
  *   - T_EC, static transform from end effector (E) to C
  */
 template <int N>
@@ -72,6 +72,9 @@ class GimbalTransformation : public TransformationBase {
   /// \brief Construct with given base and end transformations and DH parameters
   template <typename... DhArgs>
   GimbalTransformation(Transformation T_SA, Transformation T_EC, DhArgs... dh);
+
+  /// \brief Construct copying other GimbalTransformation
+  GimbalTransformation(const GimbalTransformation&) = default;
 
   /// \brief Convert to simple Transformation type
   explicit operator Transformation() const override {
@@ -137,7 +140,7 @@ class GimbalTransformation : public TransformationBase {
 
   /// \brief Assignment -- copy. Takes care of proper caching.
   /// @param[in] rhs The rhs for this to be assigned to.
-  Transformation& operator=(const Transformation & rhs);
+  GimbalTransformation& operator=(const GimbalTransformation & rhs) = default;
 
   /// \brief Apply a small update with delta being Nx1.
   /// \tparam Derived_delta Deducible matrix type.
@@ -188,7 +191,7 @@ class GimbalTransformation : public TransformationBase {
 
   Transformation T_SA_; ///< Static transform from IMU (S) to base of the kinematic chain (A)
   Transformation T_EC_; ///< Static transform from end effector (E) to camera frame (C)
-  std::array<DhParameters, N> dhChain_; ///< chain of DH parameters comprising a transform from A to E. theta is initial
+  std::array<DhParameters, N> dhChain_; ///< chain of DH parameters  a transform from A to E. theta is initial
   Eigen::Matrix<double, N, 1> parameters_; ///< changing theta value from each dh joint
   Transformation cachedT_SC_; ///< The cached overall transformation T_SC.
 

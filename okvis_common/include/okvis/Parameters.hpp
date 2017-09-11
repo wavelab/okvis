@@ -90,10 +90,9 @@ struct ExtrinsicsEstimationParameters
   {
   }
 
-  /** @brief true if this camera needs estimation of DH parameters */
+  /** @brief returns true for now */
   bool needsDhEstimation() const {
-//    return !dh_chain_AE.empty();
-    return false;
+    return true;
   }
 
   /** @brief true if transform priors need online estimation */
@@ -135,7 +134,7 @@ struct ExtrinsicsEstimationParameters
 
   okvis::kinematics::Transformation T_EC; ///< Static transform from end effector (E) to camera frame (C)
   okvis::kinematics::Transformation T_SA; ///< Static transform from IMU (S) to base of the kinematic chain (A)
-//  std::vector<DhParameters> dh_chain_AE; ///< chain of DH parameters comprising a transform from A to E
+//  std::vector<DhParameters> dh_chain_AE; ///< chain of DH parameters composing a transform from A to E
 };
 
 /*!

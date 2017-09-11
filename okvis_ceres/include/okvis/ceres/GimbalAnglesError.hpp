@@ -40,6 +40,7 @@
 #define INCLUDE_OKVIS_CERES_GIMBALANGLESERROR_HPP_
 
 #include <okvis/ceres/PoseError.hpp>
+#include <okvis/kinematics/GimbalTransformation.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -47,50 +48,42 @@ namespace okvis {
 namespace ceres {
 
 /// \brief Absolute error of a pose based on joint angles in a kinematic chain
-template <int Dim>
+template <int N>
 class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of residuals */,
-    Dim /* size of first parameter */>, public ErrorInterface {
+    N /* size of first parameter */>, public ErrorInterface {
  public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
 
   /// \brief The base class type.
-  typedef ::ceres::SizedCostFunction<6, Dim> base_t;
+  typedef ::ceres::SizedCostFunction<6, N> base_t;
 
-  /// \brief The number of residuals (6).
-  static const int kNumResiduals = 6;
+  /// \brief The number of residuals (N).
+  static const int kNumResiduals = N;
 
-  /// \brief The information matrix type (6x6).
-  typedef Eigen::Matrix<double, Dim, Dim> information_t;
+  /// \brief The information matrix type (6x6) (of the pose measurement)
+  typedef Eigen::Matrix<double, 6, 6> information_t;
 
   /// \brief The covariance matrix type (same as information).
-  typedef Eigen::Matrix<double, Dim, Dim> covariance_t;
+  typedef Eigen::Matrix<double, 6, 6> covariance_t;
 
-  /// \brief Default constructor.
-  GimbalAnglesError() = default;
+  /// \brief No default constructor.
+  GimbalAnglesError() = delete;
 
   /// \brief Construct with measurement and information matrix.
   /// @param[in] measurement The measurement.
   /// @param[in] information The information (weight) matrix.
-  GimbalAnglesError(const okvis::kinematics::Transformation & measurement,
-            const information_t & information) {
-    setMeasurement(measurement);
-    setInformation(information);
-  }
+  GimbalAnglesError(
+      const okvis::kinematics::GimbalTransformation<N> &measurement,
+      const information_t & information);
 
   /// \brief Construct with measurement and variance.
   /// @param[in] measurement The measurement.
-  /// @param[in] translationVariance The translation variance.
-  /// @param[in] rotationVariance The rotation variance.
-  GimbalAnglesError(const okvis::kinematics::Transformation & measurement,
-            double variance) {
-    setMeasurement(measurement);
-
-    information_t information;
-    information = covariance_t::Identity() * 1.0 / variance;
-    setInformation(information);
-  }
+  /// @param[in] variance The rotation variance.
+  GimbalAnglesError(
+      const okvis::kinematics::GimbalTransformation<N> &measurement,
+      double variance);
 
   /// \brief Trivial destructor.
   virtual ~GimbalAnglesError() = default;
@@ -100,19 +93,13 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
 
   /// \brief Set the measurement.
   /// @param[in] measurement The measurement.
-  void setMeasurement(const okvis::kinematics::Transformation & measurement) {
+  void setMeasurement(const okvis::kinematics::GimbalTransformation<N> & measurement) {
     measurement_ = measurement;
   }
 
   /// \brief Set the information.
   /// @param[in] information The information (weight) matrix.
-  void setInformation(const information_t & information) {
-    information_ = information;
-    covariance_ = information.inverse();
-    // perform the Cholesky decomposition on order to obtain the correct error weighting
-    Eigen::LLT<information_t> lltOfInformation(information_);
-    squareRootInformation_ = lltOfInformation.matrixL().transpose();
-  }
+  void setInformation(const information_t & information);
 
   /// \}
   /// \name Getters
@@ -147,9 +134,7 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
     * @return success of th evaluation.
     */
   virtual bool Evaluate(double const* const * parameters, double* residuals,
-                        double** jacobians) const {
-    return EvaluateWithMinimalJacobians(parameters, residuals, jacobians, NULL);
-  }
+                        double** jacobians) const;
 
   /**
    * @brief This evaluates the error term and additionally computes
@@ -163,9 +148,7 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
   virtual bool EvaluateWithMinimalJacobians(double const* const * parameters,
                                             double* residuals,
                                             double** jacobians,
-                                            double** jacobiansMinimal) const {
-    return true;
-  }
+                                            double** jacobiansMinimal) const;
 
   // sizes
   /// \brief Residual dimension.
@@ -189,9 +172,8 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
   }
 
  protected:
-
   // the measurement
-  okvis::kinematics::Transformation measurement_; ///< The pose measurement.
+  okvis::kinematics::GimbalTransformation<N> measurement_; ///< The pose measurement.
 
   // weighting related
   information_t information_; ///< The 6x6 information matrix.
@@ -202,5 +184,7 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
 
 }  // namespace ceres
 }  // namespace okvis
+
+#include "implementation/GimbalAnglesError.hpp"
 
 #endif /* INCLUDE_OKVIS_CERES_GIMBALANGLESERROR_HPP_ */
