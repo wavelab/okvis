@@ -196,7 +196,7 @@ bool Estimator::addStates(
   for (size_t i = 0; i < extrinsicsEstimationParametersVec_.size(); ++i) {
     const auto &params = extrinsicsEstimationParametersVec_.at(i);
 
-    SpecificSensorStatesContainer cameraInfos(2);
+    SpecificSensorStatesContainer cameraInfos(3);
     cameraInfos.at(CameraSensorStates::Intrinsics).exists=false;
 
 
@@ -235,7 +235,7 @@ bool Estimator::addStates(
       cameraInfos.at(CameraSensorStates::GimbalAngles).id = id;
     } else if (T_SC_as_general) {
       // Regular old transformation, optimize over rotation and translation
-      cameraInfos.at(CameraSensorStates::T_SCi).exists=true;
+      cameraInfos.at(CameraSensorStates::T_SCi).exists = true;
       if (!params.needsRelativeEstimation() && statesMap_.size() > 1) {
         // use the same block...
         cameraInfos.at(CameraSensorStates::T_SCi).id =
@@ -1061,8 +1061,26 @@ bool Estimator::getCameraSensorStates(
     uint64_t poseId, size_t cameraIdx,
     okvis::kinematics::Transformation & T_SCi) const
 {
-  return getSensorStateEstimateAs<ceres::PoseParameterBlock>(
-      poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi, T_SCi);
+  bool res;
+  if (statesMap_.at(poseId).sensors.at(SensorStates::Camera)
+      .at(cameraIdx).at(CameraSensorStates::T_SCi).exists) {
+    res = getSensorStateEstimateAs<ceres::PoseParameterBlock>(
+        poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi, T_SCi);
+  } else {    // Dynamic camera extension: don't have T_SCi, but have GimbalAngles estimate
+    Eigen::Vector2d thetas;
+    res = getSensorStateEstimateAs<ceres::AnglesParameterBlock<2>>(
+        poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::GimbalAngles, thetas);
+    const auto T_SC = std::dynamic_pointer_cast<const kinematics::GimbalTransformation<2>>(
+        this->multiFrame(poseId)->T_SC(cameraIdx));
+    res *= (T_SC != nullptr);
+    if (res) {
+      auto new_T_SC = *T_SC;
+      LOG(INFO) << "TSCi: setting parameters from " << T_SCi.parameters().transpose() << " to " << thetas.transpose();
+      new_T_SC.setParameters(thetas);
+      T_SCi = new_T_SC.overallT();
+    }
+  }
+  return res;
 }
 
 // Get the ID of the current keyframe.
