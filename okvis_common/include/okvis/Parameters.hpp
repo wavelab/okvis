@@ -90,9 +90,9 @@ struct ExtrinsicsEstimationParameters
   {
   }
 
-  /** @brief returns true for now */
+  /** @brief returns constant for now */
   bool needsDhEstimation() const {
-    return true;
+    return false;
   }
 
   /** @brief true if transform priors need online estimation */

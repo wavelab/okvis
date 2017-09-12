@@ -226,15 +226,23 @@ bool Estimator::addStates(
         estimate = T_SC_as_gimbal->parameters();
       }
 
-      const auto id = IdProvider::instance().newId();
-      auto anglesBlockPtr = std::allocate_shared<okvis::ceres::AnglesParameterBlock<2>>(
-          Eigen::aligned_allocator<okvis::ceres::AnglesParameterBlock<2>>{},
-          estimate, id, multiFrame->timestamp());
-      // add the angles parameter block. "Trivial" means there is no local parametrization for the angles themselves
-      if (!mapPtr_->addParameterBlock(anglesBlockPtr, ceres::Map::Trivial)) {
-        return false;
+      // debug: only add one param block
+      if (true && statesMap_.size() > 1) {
+        // use the same block...
+        cameraInfos.at(CameraSensorStates::GimbalAngles).id =
+            lastElementIterator->second.sensors.at(
+                SensorStates::Camera).at(i).at(CameraSensorStates::GimbalAngles).id;
+      } else {
+        const auto id = IdProvider::instance().newId();
+        auto anglesBlockPtr = std::allocate_shared<okvis::ceres::AnglesParameterBlock<2>>(
+            Eigen::aligned_allocator<okvis::ceres::AnglesParameterBlock<2>>{},
+            estimate, id, multiFrame->timestamp());
+        // add the angles parameter block. "Trivial" means there is no local parametrization for the angles themselves
+        if (!mapPtr_->addParameterBlock(anglesBlockPtr, ceres::Map::Trivial)) {
+          return false;
+        }
+        cameraInfos.at(CameraSensorStates::GimbalAngles).id = id;
       }
-      cameraInfos.at(CameraSensorStates::GimbalAngles).id = id;
     } else if (T_SC_as_general) {
       // Regular old transformation, optimize over rotation and translation
       cameraInfos.at(CameraSensorStates::T_SCi).exists = true;

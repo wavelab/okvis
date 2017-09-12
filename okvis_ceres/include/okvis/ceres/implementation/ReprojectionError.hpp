@@ -222,32 +222,51 @@ bool ReprojectionError<GEOMETRY_T>::EvaluateWithMinimalJacobians(
     }
     if (jacobians[2] != NULL) {
       Eigen::Vector3d p = hp_S.head<3>() - t_SC_S * hp_S[3];
-      Eigen::Matrix<double, 4, 6> J;
-      J.setZero();
-      J.topLeftCorner<3, 3>() = C_CS * hp_S[3];
-      J.topRightCorner<3, 3>() = -C_CS * okvis::kinematics::crossMx(p);
+      Eigen::Matrix<double, 4, 6> J_h_T_SC;
+      J_h_T_SC.setZero();
+      J_h_T_SC.topLeftCorner<3, 3>() = C_CS * hp_S[3];
+      J_h_T_SC.topRightCorner<3, 3>() = -C_CS * okvis::kinematics::crossMx(p);
 
-      // compute the minimal version
-      Eigen::Matrix<double, 2, 6, Eigen::RowMajor> J2_minimal;
-      J2_minimal = Jh_weighted * J;
-      if (!valid)
-        J2_minimal.setZero();
+      if (T_SC_as_gimbal) {
+        Eigen::Matrix<double, 4, 2> J_h_theta;
+        Eigen::Matrix<double, 6, 2> J_T_SC_theta;
 
-      // pseudo inverse of the local parametrization Jacobian:
-      Eigen::Matrix<double, 6, 7, Eigen::RowMajor> J_lift;
-      PoseLocalParameterization::liftJacobian(parameters[2], J_lift.data());
+        // The minimal version (which is also non-minimal version) wrt theta angles
+        T_SC_as_gimbal->oplusMinimalJacobian(J_T_SC_theta);
+        J_h_theta = J_h_T_SC * J_T_SC_theta;
 
-      // hallucinate Jacobian w.r.t. state
-      Eigen::Map<Eigen::Matrix<double, 2, 7, Eigen::RowMajor> > J2(
-          jacobians[2]);
-      J2 = J2_minimal * J_lift;
+        Eigen::Map<Eigen::Matrix<double, 2, 2, Eigen::RowMajor> > J_meas_theta{jacobians[2]};
+        J_meas_theta = Jh_weighted * J_h_theta;
 
-      // if requested, provide minimal Jacobians
-      if (jacobiansMinimal != NULL) {
-        if (jacobiansMinimal[2] != NULL) {
-          Eigen::Map<Eigen::Matrix<double, 2, 6, Eigen::RowMajor> > J2_minimal_mapped(
-              jacobiansMinimal[2]);
-          J2_minimal_mapped = J2_minimal;
+        if (jacobiansMinimal && jacobiansMinimal[2]) {
+          Eigen::Map<Eigen::Matrix<double, 2, 2, Eigen::RowMajor> > J_meas_theta_2{
+              jacobiansMinimal[2]};
+          J_meas_theta_2 = J_meas_theta;
+        }
+
+      } else {
+        // compute the minimal version
+        Eigen::Matrix<double, 2, 6, Eigen::RowMajor> J2_minimal;
+        J2_minimal = Jh_weighted * J_h_T_SC;
+        if (!valid)
+          J2_minimal.setZero();
+
+        // pseudo inverse of the local parametrization Jacobian:
+        Eigen::Matrix<double, 6, 7, Eigen::RowMajor> J_lift;
+        PoseLocalParameterization::liftJacobian(parameters[2], J_lift.data());
+
+        // hallucinate Jacobian w.r.t. state
+        Eigen::Map<Eigen::Matrix<double, 2, 7, Eigen::RowMajor> > J2(
+            jacobians[2]);
+        J2 = J2_minimal * J_lift;
+
+        // if requested, provide minimal Jacobians
+        if (jacobiansMinimal != NULL) {
+          if (jacobiansMinimal[2] != NULL) {
+            Eigen::Map<Eigen::Matrix<double, 2, 6, Eigen::RowMajor> > J2_minimal_mapped(
+                jacobiansMinimal[2]);
+            J2_minimal_mapped = J2_minimal;
+          }
         }
       }
     }
