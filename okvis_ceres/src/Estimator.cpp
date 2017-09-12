@@ -45,6 +45,7 @@
 #include <okvis/ceres/ImuError.hpp>
 #include <okvis/ceres/PoseError.hpp>
 #include <okvis/ceres/RelativePoseError.hpp>
+#include <okvis/ceres/RelativeGimbalPoseError.hpp>
 #include <okvis/ceres/SpeedAndBiasError.hpp>
 #include <okvis/ceres/GimbalAnglesError.hpp>
 #include <okvis/IdProvider.hpp>
