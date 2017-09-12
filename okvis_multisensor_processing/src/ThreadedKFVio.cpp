@@ -592,9 +592,7 @@ void ThreadedKFVio::imuConsumerLoop() {
       std::lock_guard<std::mutex> lock(lastState_mutex_);
       const auto& cameraSystem = lastOptimizedCameraSystem_;
       for (size_t i = 0; i < numCameras_; ++i) {
-        result.vector_of_T_SCi.push_back(
-            okvis::kinematics::Transformation(
-                *cameraSystem.T_SC(i)));
+        result.vector_of_T_SCi.push_back(cameraSystem.T_SC(i));
       }
       result.onlyPublishLandmarks = false;
       optimizationResults_.PushNonBlockingDroppingIfFull(result,1);
@@ -829,9 +827,7 @@ void ThreadedKFVio::optimizationLoop() {
       // adding further elements to result that do not access estimator.
       const auto& cameraSystem = frame_pairs->getCameraSystem();
       for (size_t i = 0; i < numCameras_; ++i) {
-        result.vector_of_T_SCi.push_back(
-            okvis::kinematics::Transformation(
-                *cameraSystem.T_SC(i)));
+        result.vector_of_T_SCi.push_back(cameraSystem.T_SC(i));
       }
     }
     optimizationResults_.Push(result);

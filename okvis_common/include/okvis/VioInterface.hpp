@@ -79,8 +79,8 @@ class VioInterface {
           const okvis::kinematics::Transformation &,
           const Eigen::Matrix<double, 9, 1> &,
           const Eigen::Matrix<double, 3, 1> &,
-          const std::vector<okvis::kinematics::Transformation,
-              Eigen::aligned_allocator<okvis::kinematics::Transformation> >&)> FullStateCallbackWithExtrinsics;
+          const std::vector<std::shared_ptr<
+              const okvis::kinematics::TransformationBase> >&)> FullStateCallbackWithExtrinsics;
   typedef Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> EigenImage;
   typedef std::function<
       void(const okvis::Time &, const okvis::MapPointVector &,

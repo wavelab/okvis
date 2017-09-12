@@ -1090,6 +1090,9 @@ bool Estimator::getCameraSensorStates(
       .at(cameraIdx).at(CameraSensorStates::T_SCi).exists) {
     res = getSensorStateEstimateAs<ceres::PoseParameterBlock>(
         poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi, T_SCi);
+    if(res) {
+      LOG(INFO) << "T_SC" << cameraIdx << ": estimated parameters " << T_SCi.coeffs().transpose();
+    }
   } else {    // Dynamic camera extension: don't have T_SCi, but have GimbalAngles estimate
     Eigen::Vector2d thetas;
     res = getSensorStateEstimateAs<ceres::AnglesParameterBlock<2>>(
@@ -1099,7 +1102,7 @@ bool Estimator::getCameraSensorStates(
     res *= (T_SC != nullptr);
     if (res) {
       auto new_T_SC = *T_SC;
-      LOG(INFO) << "TSCi: setting parameters from " << new_T_SC.parameters().transpose() << " to " << thetas.transpose();
+      LOG(INFO) << "GimbalAngles: estimated angles " << thetas[0] << ", " << thetas[1];
       new_T_SC.setParameters(thetas);
       T_SCi = new_T_SC.overallT();
     }
