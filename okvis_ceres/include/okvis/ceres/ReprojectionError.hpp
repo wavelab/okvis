@@ -46,12 +46,13 @@
 #include <okvis/ceres/PoseLocalParameterization.hpp>
 #include <okvis/ceres/ErrorInterface.hpp>
 #include <okvis/ceres/ReprojectionErrorBase.hpp>
+#include <okvis/kinematics/TransformationBase.hpp>
 
 namespace okvis {
 namespace ceres {
 
 /// \brief The 2D keypoint reprojection error.
-/// \tparam GEOMETRY_TYPE The camera gemetry type.
+/// \tparam GEOMETRY_TYPE The camera geometry type.
 template<class GEOMETRY_TYPE>
 class ReprojectionError : public ReprojectionError2dBase
 {
@@ -72,17 +73,20 @@ class ReprojectionError : public ReprojectionError2dBase
   /// \brief The keypoint type (measurement type).
   typedef Eigen::Vector2d keypoint_t;
 
-  /// \brief Default constructor.
-  ReprojectionError();
+  /// \brief No default constructor.
+  ReprojectionError() = delete;
 
   /// \brief Construct with measurement and information matrix
   /// @param[in] cameraGeometry The underlying camera geometry.
   /// @param[in] cameraId The id of the camera in the okvis::cameras::NCameraSystem.
   /// @param[in] measurement The measurement.
-  /// @param[in] information The information (weight) matrix.
+  /// @param[in] information The information (weight) matrix
+  /// @param[in] cameraT_SC pointer to camera extrinsics (used for dynamic camera extension)
   ReprojectionError(std::shared_ptr<const camera_geometry_t> cameraGeometry,
-                    uint64_t cameraId, const measurement_t & measurement,
-                    const covariance_t & information);
+                    uint64_t cameraId,
+                    const measurement_t & measurement,
+                    const covariance_t & information,
+                    std::shared_ptr<const okvis::kinematics::TransformationBase> cameraT_SC = nullptr);
 
   /// \brief Trivial destructor.
   virtual ~ReprojectionError()
@@ -173,7 +177,7 @@ class ReprojectionError : public ReprojectionError2dBase
   /// \return The dimension.
   size_t parameterBlockDim(size_t parameterBlockId) const
   {
-    return base_t::parameter_block_sizes().at(parameterBlockId);
+    return this->parameter_block_sizes().at(parameterBlockId);
   }
 
   /// @brief Residual block type as string
@@ -189,6 +193,7 @@ class ReprojectionError : public ReprojectionError2dBase
 
   /// \brief The camera model:
   std::shared_ptr<const camera_geometry_t> cameraGeometry_;
+  std::shared_ptr<const okvis::kinematics::TransformationBase> cameraT_SC_;
 
   // weighting related
   covariance_t information_; ///< The 2x2 information matrix.

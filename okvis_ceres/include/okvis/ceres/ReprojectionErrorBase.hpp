@@ -48,8 +48,7 @@ namespace ceres {
 
 /// \brief Reprojection error base class.
 class ReprojectionErrorBase :
-    public ::ceres::SizedCostFunction<2 /* number of residuals */,
-        7 /* size of first parameter */, 4 /* size of second parameter */, 7 /* size of third parameter (camera extrinsics) */>,
+    public ::ceres::CostFunction,
     public ErrorInterface {
  public:
 
@@ -70,6 +69,16 @@ class ReprojectionErrorBase :
 /// \brief 2D keypoint reprojection error base class.
 class ReprojectionError2dBase : public ReprojectionErrorBase {
  public:
+
+  // Initialize with given size of third parameter (camera extrinsics)
+  explicit ReprojectionError2dBase(const int camera_extrinsics_size = 7) {
+    // Setup Ceres block sizes
+    this->set_num_residuals(2);
+    this->mutable_parameter_block_sizes()->reserve(3);
+    this->mutable_parameter_block_sizes()->push_back(7);  // size of first parameter (world to sensor transformation)
+    this->mutable_parameter_block_sizes()->push_back(4);  // size of second parameter (homogeneous point)
+    this->mutable_parameter_block_sizes()->push_back(camera_extrinsics_size);  // size of third parameter
+  }
 
   /// \brief Measurement type (2D).
   typedef Eigen::Vector2d measurement_t;

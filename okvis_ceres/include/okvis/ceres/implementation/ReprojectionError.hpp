@@ -38,23 +38,25 @@
 
 #include <okvis/kinematics/operators.hpp>
 #include <okvis/kinematics/Transformation.hpp>
+#include <okvis/kinematics/GimbalTransformation.hpp>
+
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
 /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
 namespace ceres {
 
-// Default constructor.
-template<class GEOMETRY_T>
-ReprojectionError<GEOMETRY_T>::ReprojectionError()
-    : cameraGeometry_(new camera_geometry_t) {
-}
-
 // Construct with measurement and information matrix.
 template<class GEOMETRY_T>
 ReprojectionError<GEOMETRY_T>::ReprojectionError(
-    std::shared_ptr<const camera_geometry_t> cameraGeometry, uint64_t cameraId,
-    const measurement_t & measurement, const covariance_t & information) {
+    std::shared_ptr<const camera_geometry_t> cameraGeometry,
+    uint64_t cameraId,
+    const measurement_t & measurement,
+    const covariance_t & information,
+    std::shared_ptr<const okvis::kinematics::TransformationBase> cameraT_SC)
+    // dynamic camera extension - @todo hastily added option
+    : ReprojectionError2dBase{cameraT_SC ? cameraT_SC->parameterSize() : 7},
+      cameraT_SC_{cameraT_SC} {
   setCameraId(cameraId);
   setMeasurement(measurement);
   setInformation(information);
@@ -102,9 +104,22 @@ bool ReprojectionError<GEOMETRY_T>::EvaluateWithMinimalJacobians(
   //std::cout << hp_W.transpose() << std::endl;
 
   // the sensor to camera transformation
-  Eigen::Map<const Eigen::Vector3d> t_SC_S(&parameters[2][0]);
-  const Eigen::Quaterniond q_SC(parameters[2][6], parameters[2][3],
-                                parameters[2][4], parameters[2][5]);
+  okvis::kinematics::Transformation T_SC;
+  auto T_SC_as_gimbal = std::dynamic_pointer_cast<const okvis::kinematics::GimbalTransformation<2>>(cameraT_SC_);
+  if (T_SC_as_gimbal) {
+    // parameters[2] is an array of 2 joint angles
+    auto T_SC_updated = *T_SC_as_gimbal;
+    auto thetas = Eigen::Map<const Eigen::Vector2d>{parameters[2]};
+    T_SC_updated.setParameters(thetas);
+    T_SC = T_SC_updated.overallT();
+  } else {
+    // regular behaviour: parameters[2] has 7 parameters
+    auto params = Eigen::Map<const Eigen::Matrix<double, 7, 1>>{parameters[2]};
+    T_SC.setParameters(params);
+  }
+
+  const auto t_SC_S = T_SC.r();
+  const auto q_SC = T_SC.q();
 
   // transform the point into the camera:
   Eigen::Matrix3d C_SC = q_SC.toRotationMatrix();

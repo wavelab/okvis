@@ -136,6 +136,10 @@ inline Transformation::Transformation(const Eigen::Matrix4d & T_AB)
   assert(fabs(T_AB(3, 3) - 1.0) < 1.0e-12);
 }
 
+inline Transformation::Transformation(double const * coeffs) :
+ Transformation(Eigen::Vector3d{&coeffs[0]}, Eigen::Quaterniond{&coeffs[3]}) { }
+
+
 template<typename Derived_coeffs>
 inline bool Transformation::setCoeffs(
     const Eigen::MatrixBase<Derived_coeffs> & coeffs) {

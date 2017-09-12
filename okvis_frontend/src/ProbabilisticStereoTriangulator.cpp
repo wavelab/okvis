@@ -277,8 +277,11 @@ void ProbabilisticStereoTriangulator<CAMERA_GEOMETRY_T>::getUncertainty(
   Eigen::Matrix2d inverseMeasurementCovariance = Eigen::Matrix2d::Identity()
       * (1.0 / (keypointStdDev * keypointStdDev));
   ::okvis::ceres::ReprojectionError<CAMERA_GEOMETRY_T> reprojectionErrorA(
-      frameA_->geometryAs<CAMERA_GEOMETRY_T>(camIdA_), 0, kptA,
-      inverseMeasurementCovariance);
+      frameA_->geometryAs<CAMERA_GEOMETRY_T>(camIdA_),
+      0,
+      kptA,
+      inverseMeasurementCovariance,
+      frameA_->T_SC(camIdA_));
   //typename keypointA_t::measurement_t residualA;
   Eigen::Matrix<double, 2, 1> residualA;
   Eigen::Matrix<double, 2, 4, Eigen::RowMajor> J_hpA;
@@ -305,8 +308,11 @@ void ProbabilisticStereoTriangulator<CAMERA_GEOMETRY_T>::getUncertainty(
   inverseMeasurementCovariance *= 1.0 / (keypointStdDev * keypointStdDev);
 
   ::okvis::ceres::ReprojectionError<CAMERA_GEOMETRY_T> reprojectionErrorB(
-      frameB_->geometryAs<CAMERA_GEOMETRY_T>(camIdB_), 0, kptB,
-      inverseMeasurementCovariance);
+      frameB_->geometryAs<CAMERA_GEOMETRY_T>(camIdB_),
+      0,
+      kptB,
+      inverseMeasurementCovariance,
+      frameB_->T_SC(camIdB_));
   Eigen::Matrix<double, 2, 1> residualB;
   Eigen::Matrix<double, 2, 7, Eigen::RowMajor> J_TB;
   Eigen::Matrix<double, 2, 6, Eigen::RowMajor> J_TB_min;

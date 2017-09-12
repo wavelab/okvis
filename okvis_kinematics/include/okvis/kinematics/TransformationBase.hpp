@@ -101,6 +101,9 @@ class TransformationBase
 
   /// \brief Convert to simple Transformation type
   virtual operator Transformation() const = 0;
+
+  /// \brief size of underlying parameters
+  virtual int parameterSize() const = 0;
 };
 
 }  // namespace kinematics

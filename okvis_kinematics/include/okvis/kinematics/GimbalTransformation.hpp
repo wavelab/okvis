@@ -76,6 +76,10 @@ class GimbalTransformation : public TransformationBase {
   /// \brief Construct copying other GimbalTransformation
   GimbalTransformation(const GimbalTransformation&) = default;
 
+  /// \brief Construct from a pointer to a vector of N parameters (Ceres compatibility)
+  /// @param[in] coeffs The parameters as joint angles
+  explicit GimbalTransformation(double const * coeffs);
+
   /// \brief Convert to simple Transformation type
   explicit operator Transformation() const override {
     return this->cachedT_SC_;
@@ -86,6 +90,11 @@ class GimbalTransformation : public TransformationBase {
   /// @param[in] parameters The parameters as theta angles in radians.
   template<typename Derived>
   bool setParameters(const Eigen::MatrixBase<Derived> & parameters);
+
+  /// \brief size of the underlying parameters
+  int parameterSize() const override {
+    return N;
+  }
 
   /// \brief Return a copy of overall transformation, T_SC
   Transformation overallT() const;

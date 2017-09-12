@@ -108,6 +108,10 @@ class Transformation : public TransformationBase
   /// @param[in] T_AB The homogeneous transformation matrix.
   explicit Transformation(const Eigen::Matrix4d & T_AB);
 
+  /// \brief Construct from a pointer to a vector of 7 parameters (Ceres compatibility)
+  /// @param[in] coeffs The parameters as [r_AB,q_AB], q_AB as [x,y,z,w] (Eigen internal convention).
+  explicit Transformation(double const * coeffs);
+
   /// \brief Parameter setting, all 7.
   /// \tparam Derived_coeffs Deducible matrix type.
   /// @param[in] coeffs The parameters as [r_AB,q_AB], q_AB as [x,y,z,w] (Eigen internal convention).
@@ -121,6 +125,11 @@ class Transformation : public TransformationBase
   bool setParameters(const Eigen::MatrixBase<Derived_coeffs> & parameters)
   {
     return setCoeffs(parameters);
+  }
+
+  /// \brief size of the underlying parameters
+  int parameterSize() const override {
+    return 7;
   }
 
   /// \brief The underlying homogeneous transformation matrix.
