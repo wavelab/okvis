@@ -74,14 +74,22 @@ template<class GEOMETRY_TYPE>
       information,
       multiFramePtr->T_SC(camIdx))};
 
+  uint64_t T_SC_param_id;
+  if (statesMap_.at(poseId).sensors.at(SensorStates::Camera).at(camIdx).at(
+      CameraSensorStates::GimbalAngles).exists) {
+    T_SC_param_id = statesMap_.at(poseId).sensors.at(SensorStates::Camera).at(camIdx).at(
+        CameraSensorStates::GimbalAngles).id;
+  } else {
+    T_SC_param_id = statesMap_.at(poseId).sensors.at(SensorStates::Camera).at(camIdx).at(
+        CameraSensorStates::T_SCi).id;
+  }
+
   ::ceres::ResidualBlockId retVal = mapPtr_->addResidualBlock(
       reprojectionError,
       cauchyLossFunctionPtr_ ? cauchyLossFunctionPtr_.get() : NULL,
       mapPtr_->parameterBlockPtr(poseId),
       mapPtr_->parameterBlockPtr(landmarkId),
-      mapPtr_->parameterBlockPtr(
-          statesMap_.at(poseId).sensors.at(SensorStates::Camera).at(camIdx).at(
-              CameraSensorStates::T_SCi).id));
+      mapPtr_->parameterBlockPtr(T_SC_param_id));
 
   // remember
   landmarksMap_.at(landmarkId).observations.insert(
