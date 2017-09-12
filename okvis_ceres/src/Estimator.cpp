@@ -589,7 +589,7 @@ bool Estimator::applyMarginalizationStrategy(
     for (size_t i = 0; i < it->second.sensors.size(); ++i) {
       for (size_t j = 0; j < it->second.sensors[i].size(); ++j) {
         for (size_t k = 0; k < it->second.sensors[i][j].size(); ++k) {
-          if (i == SensorStates::Camera && k == CameraSensorStates::T_SCi) {
+          if (i == SensorStates::Camera && (k == CameraSensorStates::T_SCi || k == CameraSensorStates::GimbalAngles)) {
             continue; // we do not remove the extrinsics pose here.
           }
           if (!it->second.sensors[i][j][k].exists) {

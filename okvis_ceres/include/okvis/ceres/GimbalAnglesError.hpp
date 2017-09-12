@@ -59,8 +59,8 @@ class GimbalAnglesError : public ::ceres::SizedCostFunction<6 /* number of resid
   /// \brief The base class type.
   typedef ::ceres::SizedCostFunction<6, N> base_t;
 
-  /// \brief The number of residuals (N).
-  static const int kNumResiduals = N;
+  /// \brief The number of residuals (6).
+  static const int kNumResiduals = 6;
 
   /// \brief The information matrix type (6x6)
   typedef Eigen::Matrix<double, 6, 6> information_t;
