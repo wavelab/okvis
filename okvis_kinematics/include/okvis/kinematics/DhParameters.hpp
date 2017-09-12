@@ -54,18 +54,21 @@ struct DhParameters
   double d = 0;      ///< Link offset [m]
   double a = 0;      ///< Link length [m]
   double alpha = 0;  ///< Twist angle [rad]
+  double theta_offset = 0;  ///< Constant added to theta [rad]
 
   DhParameters() = default;
-  DhParameters(double init_theta, double d, double a, double alpha) :
-      theta{init_theta}, d{d}, a{a}, alpha{alpha} {}
+  DhParameters(double init_theta, double d, double a, double alpha, double theta_offset) :
+      theta{init_theta}, d{d}, a{a}, alpha{alpha}, theta_offset{theta_offset} {}
 
   /// \brief set parameters to random values with arbitrary bounds
   void setRandom() {
-    Eigen::Vector4d r = Eigen::Vector4d::Random();
-    theta = r[0] * M_PI;
+    Eigen::Matrix<double, 5, 1> r;
+    r.setRandom();
+    theta = r[0] * M_PI/2;
     alpha = r[1] * M_PI;
     a = r[2];
     d = r[3];
+    theta_offset = r[4] * M_PI/2;
   }
 
   /// \brief jacobian of the tangent vector w.r.t. the joint angle theta
@@ -75,15 +78,15 @@ struct DhParameters
   bool thetaMinimalJacobian(const Eigen::MatrixBase<Derived_jacobian> & jacobian) const {
     EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived_jacobian, 6, 1);
     auto &jacobian_out = const_cast<Eigen::MatrixBase<Derived_jacobian> &>(jacobian);
-    jacobian_out << -a*sin(theta), a*cos(theta), 0, 0, 0, 1;
+    jacobian_out << -a*sin(theta + theta_offset), a*cos(theta + theta_offset), 0, 0, 0, 1;
     return true;
   }
 };
 
 /// \brief Compute homogeneous transformation from parameters
 inline Transformation transformationFromDh(const DhParameters &dh) {
-  const auto ctheta = cos(dh.theta);
-  const auto stheta = sin(dh.theta);
+  const auto ctheta = cos(dh.theta + dh.theta_offset);
+  const auto stheta = sin(dh.theta + dh.theta_offset);
   const auto calpha = cos(dh.alpha);
   const auto salpha = sin(dh.alpha);
   Eigen::Matrix4d T;

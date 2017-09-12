@@ -559,10 +559,10 @@ namespace {
   // Helper to read dh parameters from a file node
   bool nodeToDhParameters(const cv::FileNode& node,
                           okvis::kinematics::DhParameters& dh) {
-    if (!(node.isSeq() && node.size() == 4)) {
+    if (!(node.isSeq() && node.size() == 5)) {
       return false;
     }
-    dh = okvis::kinematics::DhParameters{node[0], node[1], node[2], node[3]};
+    dh = okvis::kinematics::DhParameters{node[0], node[1], node[2], node[3], node[4]};
     return true;
   }
 }
