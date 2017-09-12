@@ -609,7 +609,8 @@ bool VioParametersReader::getSingleCalibrationFromNode(
     ok *= nodeToMatrix4d(cameraNode["T_EC"], T_EC);
     ok *= nodeToDhParameters(cameraNode["dh_parameters"][0], dh1);
     ok *= nodeToDhParameters(cameraNode["dh_parameters"][1], dh2);
-    calib.T_SC = std::make_shared<okvis::kinematics::GimbalTransformation<2>>(
+    calib.T_SC = std::allocate_shared<okvis::kinematics::GimbalTransformation<2>>(
+        Eigen::aligned_allocator<okvis::kinematics::GimbalTransformation<2>>{},
         okvis::kinematics::Transformation{T_SA},
         okvis::kinematics::Transformation{T_EC},
         dh1,
@@ -618,7 +619,9 @@ bool VioParametersReader::getSingleCalibrationFromNode(
     cv::FileNode T_SC_node = cameraNode["T_SC"];
     Eigen::Matrix4d T_SC;
     ok *= nodeToMatrix4d(T_SC_node, T_SC);
-    calib.T_SC = std::make_shared<okvis::kinematics::Transformation>(T_SC);
+    calib.T_SC = std::allocate_shared<okvis::kinematics::Transformation>(
+        Eigen::aligned_allocator<okvis::kinematics::GimbalTransformation<2>>{},
+        T_SC);
   }
   return ok;
 }

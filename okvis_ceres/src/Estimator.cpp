@@ -226,7 +226,8 @@ bool Estimator::addStates(
       }
 
       const auto id = IdProvider::instance().newId();
-      auto anglesBlockPtr = std::make_shared<okvis::ceres::AnglesParameterBlock<2>>(
+      auto anglesBlockPtr = std::allocate_shared<okvis::ceres::AnglesParameterBlock<2>>(
+          Eigen::aligned_allocator<okvis::ceres::AnglesParameterBlock<2>>{},
           estimate, id, multiFrame->timestamp());
       // add the angles parameter block. "Trivial" means there is no local parametrization for the angles themselves
       if (!mapPtr_->addParameterBlock(anglesBlockPtr, ceres::Map::Trivial)) {
@@ -293,7 +294,8 @@ bool Estimator::addStates(
 
       if (T_SC_as_gimbal) {
         if (params.needsDhEstimation())  {
-          auto gimbalError = std::make_shared<ceres::GimbalAnglesError<2>>(
+          auto gimbalError = std::allocate_shared<ceres::GimbalAnglesError<2>>(
+              Eigen::aligned_allocator<ceres::GimbalAnglesError<2>>{},
               *T_SC_as_gimbal, params.rotationVariance());
           // add to map
           mapPtr_->addResidualBlock(
