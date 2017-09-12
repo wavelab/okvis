@@ -63,14 +63,7 @@ struct ExtrinsicsEstimationParameters
 {
   // set to 0 in order to turn off
   /// \brief Default Constructor -- fixed camera extrinsics.
-  ExtrinsicsEstimationParameters()
-      : sigma_absolute_translation(0.0),
-        sigma_absolute_orientation(0.0),
-        sigma_c_relative_translation(0.0),
-        sigma_c_relative_orientation(0.0)
-
-  {
-  }
+  ExtrinsicsEstimationParameters() = default;
 
   /**
    * @brief Constructor.
@@ -90,13 +83,14 @@ struct ExtrinsicsEstimationParameters
   {
   }
 
-  /** @brief returns constant for now */
+  /** @brief true if joint angle needs prior on initial value */
   bool needsDhAbsolutePrior() const {
-    return true;
+    return sigma_initial_theta > 1e-16;
   }
 
+  /** @brief true if joint angle needs prior on changing values */
   bool needsDhRelativeEstimation() const {
-    return sigma_c_relative_orientation > 1e-12;
+    return sigma_c_relative_theta > 1e-12;
   }
 
   /** @brief true if transform priors need online estimation */
@@ -129,12 +123,17 @@ struct ExtrinsicsEstimationParameters
 
 
   // absolute (prior) w.r.t frame S
-  double sigma_absolute_translation; ///< Absolute translation stdev. [m]
-  double sigma_absolute_orientation; ///< Absolute orientation stdev. [rad]
+  double sigma_absolute_translation = 0.0; ///< Absolute translation stdev. [m]
+  double sigma_absolute_orientation = 0.0; ///< Absolute orientation stdev. [rad]
 
   // relative (temporal)
-  double sigma_c_relative_translation; ///< Relative translation noise density. [m/sqrt(Hz)]
-  double sigma_c_relative_orientation; ///< Relative orientation noise density. [rad/sqrt(Hz)]
+  double sigma_c_relative_translation = 0.0; ///< Relative translation noise density. [m/sqrt(Hz)]
+  double sigma_c_relative_orientation = 0.0; ///< Relative orientation noise density. [rad/sqrt(Hz)]
+
+  // dynamic camera extension: prior and relative
+  double sigma_initial_theta = 0.0;     ///<orientation stddev for initial joint angle [rad]
+  // @todo sigma_c_relative_theta is only checked for >0, value is not used
+  double sigma_c_relative_theta = 0.0;  ///<Relative joint angle change (@todo)
 
   okvis::kinematics::Transformation T_EC; ///< Static transform from end effector (E) to camera frame (C)
   okvis::kinematics::Transformation T_SA; ///< Static transform from IMU (S) to base of the kinematic chain (A)

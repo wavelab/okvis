@@ -306,7 +306,7 @@ bool Estimator::addStates(
           // Add a prior GimbalAnglesError for the first state
           auto costFunction = std::allocate_shared<ceres::GimbalAnglesError<2>>(
               Eigen::aligned_allocator<ceres::GimbalAnglesError<2>>{},
-              *T_SC_as_gimbal, params.rotationVariance());
+              *T_SC_as_gimbal, params.sigma_initial_theta);
           // add to map
           const auto id = mapPtr_->addResidualBlock(
               costFunction,

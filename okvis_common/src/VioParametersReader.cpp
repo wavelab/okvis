@@ -249,6 +249,22 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
     LOG(WARNING)
         << "camera_params: sigma_c_relative_orientation parameter not provided. Setting to default 0.0";
   }
+  if (file["camera_params"]["sigma_initial_theta"].isReal()) {
+    file["camera_params"]["sigma_initial_theta"]
+        >> vioParameters_.camera_extrinsics.sigma_initial_theta;
+  } else {
+    vioParameters_.camera_extrinsics.sigma_initial_theta = 0.0;
+    LOG(WARNING)
+        << "camera_params: sigma_initial_theta parameter not provided. Setting to default 0.0";
+  }
+  if (file["camera_params"]["sigma_c_relative_theta"].isReal()) {
+    file["camera_params"]["sigma_c_relative_theta"]
+        >> vioParameters_.camera_extrinsics.sigma_c_relative_theta;
+  } else {
+    vioParameters_.camera_extrinsics.sigma_c_relative_theta = 0.0;
+    LOG(WARNING)
+        << "camera_params: sigma_c_relative_theta parameter not provided. Setting to default 0.0";
+  }
 
   if(file["publishing_options"]["publish_rate"].isInt()) {
     file["publishing_options"]["publish_rate"] 
