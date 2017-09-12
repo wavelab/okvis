@@ -227,7 +227,7 @@ bool Estimator::addStates(
       }
 
       // debug: only add one param block
-      if (true && statesMap_.size() > 1) {
+      if (!params.needsDhRelativeEstimation() && statesMap_.size() > 1) {
         // use the same block...
         cameraInfos.at(CameraSensorStates::GimbalAngles).id =
             lastElementIterator->second.sensors.at(
@@ -302,20 +302,22 @@ bool Estimator::addStates(
       auto T_SC_as_general = std::dynamic_pointer_cast<const okvis::kinematics::Transformation>(multiFrame->T_SC(i));
 
       if (T_SC_as_gimbal) {
-        if (params.needsDhEstimation())  {
-          auto gimbalError = std::allocate_shared<ceres::GimbalAnglesError<2>>(
+        if (params.needsDhAbsolutePrior())  {
+          // Add a prior GimbalAnglesError for the first state
+          auto costFunction = std::allocate_shared<ceres::GimbalAnglesError<2>>(
               Eigen::aligned_allocator<ceres::GimbalAnglesError<2>>{},
               *T_SC_as_gimbal, params.rotationVariance());
           // add to map
-          mapPtr_->addResidualBlock(
-              gimbalError,
+          const auto id = mapPtr_->addResidualBlock(
+              costFunction,
               NULL,
               mapPtr_->parameterBlockPtr(
                   states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::GimbalAngles).id));
-          //mapPtr_->isJacobianCorrect(id,1.0e-6);
+          mapPtr_->isJacobianCorrect(id,1.0e-6);
         } else {
-          mapPtr_->setParameterBlockConstant(
-              states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::GimbalAngles).id);
+          // Don't set the parameter block constant, even if we don't have a prior. Otherwise would do:
+          //mapPtr_->setParameterBlockConstant(
+          //    states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::GimbalAngles).id);
         }
       } else if(T_SC_as_general) {
         if (params.needsAbsoluteEstimation()) {

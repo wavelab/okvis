@@ -107,14 +107,26 @@ bool GimbalAnglesError<N>::EvaluateWithMinimalJacobians(double const* const * pa
 
   // compute Jacobian
   if (jacobians && jacobians[0]) {
-    Eigen::Map<Eigen::Matrix<double, 6, N, Eigen::RowMajor> > J0(jacobians[0]);
-    if (!T_SC.oplusMinimalJacobian(J0)) {
+    Eigen::Map<Eigen::Matrix<double, 6, N, Eigen::RowMajor> > J_error_theta(jacobians[0]);
+    Eigen::Matrix<double, 6, 6, Eigen::RowMajor> J_error_T_SC;
+    J_error_T_SC.setIdentity();
+    J_error_T_SC *= -1.0;
+    J_error_T_SC.block<3, 3>(3, 3) = -okvis::kinematics::plus(dp.q())
+        .topLeftCorner<3, 3>();
+    // @todo
+//    J_error_T_SC = (squareRootInformation_ * J_error_T_SC).eval();
+
+    Eigen::Matrix<double, 6, N, Eigen::RowMajor> J_T_SC_theta;
+    if (!T_SC.oplusMinimalJacobian(J_T_SC_theta)) {
       return false;
     }
+
+    J_error_theta = J_error_T_SC * J_T_SC_theta;
+
     if (jacobiansMinimal && jacobiansMinimal[0]) {
       // Put the same thing into minimal jacobian
       Eigen::Map<Eigen::Matrix<double, 6, N, Eigen::RowMajor> > J0_minimal(jacobiansMinimal[0]);
-      J0_minimal = J0;
+      J0_minimal = J_error_theta;
     }
   }
   return true;

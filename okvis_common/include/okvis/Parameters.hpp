@@ -91,8 +91,12 @@ struct ExtrinsicsEstimationParameters
   }
 
   /** @brief returns constant for now */
-  bool needsDhEstimation() const {
-    return false;
+  bool needsDhAbsolutePrior() const {
+    return true;
+  }
+
+  bool needsDhRelativeEstimation() const {
+    return sigma_c_relative_orientation > 1e-12;
   }
 
   /** @brief true if transform priors need online estimation */

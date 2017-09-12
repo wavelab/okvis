@@ -90,6 +90,8 @@ template<class GEOMETRY_TYPE>
       mapPtr_->parameterBlockPtr(landmarkId),
       mapPtr_->parameterBlockPtr(T_SC_param_id));
 
+//  mapPtr_->isJacobianCorrect(retVal,1.0e-4);
+
   // remember
   landmarksMap_.at(landmarkId).observations.insert(
       std::pair<okvis::KeypointIdentifier, uint64_t>(

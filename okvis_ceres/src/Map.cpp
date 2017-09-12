@@ -156,8 +156,8 @@ void Map::getLhs(uint64_t parameterBlockId, Eigen::MatrixXd& H) {
 }
 
 // Check a Jacobian with numeric differences.
-bool Map::isJacobianCorrect(::ceres::ResidualBlockId residualBlockId,
-                            double relTol) const {
+bool Map::isJacobianCorrect(const ::ceres::ResidualBlockId residualBlockId,
+                            const double relTol) const {
   std::shared_ptr<const okvis::ceres::ErrorInterface> errorInterface_ptr =
       errorInterfacePtr(residualBlockId);
   ParameterBlockCollection parametersBlocks = parameters(residualBlockId);
@@ -219,7 +219,7 @@ bool Map::isJacobianCorrect(::ceres::ResidualBlockId residualBlockId,
   }
 
   // calculate num diff Jacobians
-  const double delta = 1e-8;
+  const double delta = 1e-10;
   for (size_t i = 0; i < parametersBlocks.size(); ++i) {
     for (size_t j = 0; j < parametersBlocks[i].second->minimalDimension();
         ++j) {
