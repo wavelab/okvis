@@ -586,6 +586,26 @@ bool Map::setParameterBlockVariable(uint64_t parameterBlockId) {
   return true;
 }
 
+// Set the upper and lower bounds for a parameter block
+bool Map::setParameterBlockBounds(
+    okvis::ceres::ParameterBlock * parameterBlock,
+    const Eigen::VectorXd& lowerBounds,
+    const Eigen::VectorXd& upperBounds) {
+  if (!parameterBlock || !parameterBlockExists(parameterBlock->id())) {
+    return false;
+  }
+  // Note Eigen and Ceres use unsigned indices
+  const auto N = static_cast<int>(parameterBlock->dimension());
+  if (lowerBounds.size() != N || upperBounds.size() != N) {
+    return false;
+  }
+  for (int i = 0; i < N; ++i) {
+    problem_->SetParameterLowerBound(parameterBlock->parameters(), i, lowerBounds[i]);
+    problem_->SetParameterUpperBound(parameterBlock->parameters(), i, upperBounds[i]);
+  }
+  return true;
+}
+
 // Reset the (local) parameterisation of a parameter block.
 bool Map::resetParameterization(uint64_t parameterBlockId,
                                 int parameterization) {

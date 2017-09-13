@@ -269,6 +269,18 @@ class Map {
   }
 
   /**
+   * @brief Set the upper and lower bounds for a parameter block
+   * @param[in] parameterBlock Pointer to the parameter block that should be constant.
+   * @param[in] lowerBounds Vector that must match dimension of the parameter block
+   * @param[in] upperBounds Vector that must match dimension of the parameter block
+   * @return True on success.
+   */
+  bool setParameterBlockBounds(
+      okvis::ceres::ParameterBlock * parameterBlock,
+      const Eigen::VectorXd& lowerBounds,
+      const Eigen::VectorXd& upperBounds);
+
+  /**
    * @brief Reset the (local) parameterisation of a parameter block.
    * @param[in] parameterBlockId The ID of the parameter block in question.
    * @param[in] parameterization okvis::ceres::Parameterization to tell how to do the local parameterisation.

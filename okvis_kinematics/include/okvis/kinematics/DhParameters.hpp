@@ -55,6 +55,9 @@ struct DhParameters
   double a = 0;      ///< Link length [m]
   double alpha = 0;  ///< Twist angle [rad]
   double theta_offset = 0;  ///< Constant added to theta [rad]
+  /// Bounds on theta (relative to theta_offset)
+  double theta_lower_bound = -std::numeric_limits<double>::infinity();
+  double theta_upper_bound = std::numeric_limits<double>::infinity();
 
   DhParameters() = default;
   DhParameters(double init_theta, double d, double a, double alpha, double theta_offset) :

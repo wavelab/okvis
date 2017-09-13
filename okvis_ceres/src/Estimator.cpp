@@ -211,7 +211,7 @@ bool Estimator::addStates(
 
       cameraInfos.at(CameraSensorStates::GimbalAngles).exists = true;
 
-      // add a pose parameter block for the gimbal angless
+      // add a pose parameter block for the gimbal angles
       // @todo generalize to other sizes of chain
       Eigen::Vector2d estimate;
       if (statesMap_.size() > 1) {
@@ -237,10 +237,16 @@ bool Estimator::addStates(
         auto anglesBlockPtr = std::allocate_shared<okvis::ceres::AnglesParameterBlock<2>>(
             Eigen::aligned_allocator<okvis::ceres::AnglesParameterBlock<2>>{},
             estimate, id, multiFrame->timestamp());
-        // add the angles parameter block. "Trivial" means there is no local parametrization for the angles themselves
-        if (!mapPtr_->addParameterBlock(anglesBlockPtr, ceres::Map::Trivial)) {
+        // Add the angles parameter block. "Trivial" means there is no local parametrization for the angles themselves
+        bool ok = mapPtr_->addParameterBlock(anglesBlockPtr, ceres::Map::Trivial);
+        // Set upper and lower bounds on the estimated angles
+        ok = ok && mapPtr_->setParameterBlockBounds(anglesBlockPtr.get(),
+                                                    T_SC_as_gimbal->getLowerBounds(),
+                                                    T_SC_as_gimbal->getUpperBounds());
+        if (!ok) {
           return false;
         }
+
         cameraInfos.at(CameraSensorStates::GimbalAngles).id = id;
       }
     } else if (T_SC_as_general) {

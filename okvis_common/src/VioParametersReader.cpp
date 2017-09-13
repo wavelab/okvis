@@ -575,10 +575,14 @@ namespace {
   // Helper to read dh parameters from a file node
   bool nodeToDhParameters(const cv::FileNode& node,
                           okvis::kinematics::DhParameters& dh) {
-    if (!(node.isSeq() && node.size() == 5)) {
+    if (!(node.isSeq() && (node.size() == 5 || node.size() == 7))) {
       return false;
     }
     dh = okvis::kinematics::DhParameters{node[0], node[1], node[2], node[3], node[4]};
+    if (node.size() == 7) {
+      dh.theta_lower_bound = node[5];
+      dh.theta_upper_bound = node[6];
+    }
     return true;
   }
 }

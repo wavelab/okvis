@@ -131,6 +131,24 @@ Transformation GimbalTransformation<N>::inverse() const {
 }
 
 template <int N>
+Eigen::Matrix<double, N, 1> GimbalTransformation<N>::getLowerBounds() const {
+  Eigen::Matrix<double, N, 1> res;
+  for (auto i = 0u; i < N; ++i) {
+    res[i] = dhChain_[i].theta_lower_bound;
+  }
+  return res;
+};
+
+template <int N>
+Eigen::Matrix<double, N, 1> GimbalTransformation<N>::getUpperBounds() const {
+  Eigen::Matrix<double, N, 1> res;
+  for (auto i = 0u; i < N; ++i) {
+    res[i] = dhChain_[i].theta_upper_bound;
+  }
+  return res;
+};
+
+template <int N>
 template<typename Derived_delta>
 bool GimbalTransformation<N>::oplus(const Eigen::MatrixBase<Derived_delta> & delta)  {
   EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Derived_delta, N);

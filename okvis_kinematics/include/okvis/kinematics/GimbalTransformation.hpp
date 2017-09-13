@@ -127,6 +127,14 @@ class GimbalTransformation : public TransformationBase {
   /// \brief Returns a copy of the transformation inverted.
   Transformation inverse() const override;
 
+  /// \brief Return the upper bounds stored in the DH chain
+  // @todo these bounds are nowhere used internally; only stored for retrieval.
+  Eigen::Matrix<double, N, 1> getLowerBounds() const;
+
+  /// \brief Return the upper bounds stored in the DH chain
+  // @todo these bounds are nowhere used internally; only stored for retrieval.
+  Eigen::Matrix<double, N, 1> getUpperBounds() const;
+
   // operator* (group operator)
   /// \brief Multiplication with another transformation object.
   /// @param[in] rhs The right-hand side transformation for this to be multiplied with.
