@@ -1090,6 +1090,12 @@ bool Estimator::getCameraSensorStates(
       .at(cameraIdx).at(CameraSensorStates::T_SCi).exists) {
     res = getSensorStateEstimateAs<ceres::PoseParameterBlock>(
         poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi, T_SCi);
+
+    auto p_new_T_SC = std::allocate_shared<const kinematics::Transformation>(
+        Eigen::aligned_allocator<kinematics::Transformation>{}, T_SCi);
+    // @todo move somewhere else?
+    this->multiFrame(poseId)->setT_SC(cameraIdx, p_new_T_SC);
+
     if(res) {
       LOG(INFO) << "T_SC" << cameraIdx << ": estimated parameters " << T_SCi.coeffs().transpose();
     }
@@ -1097,14 +1103,20 @@ bool Estimator::getCameraSensorStates(
     Eigen::Vector2d thetas;
     res = getSensorStateEstimateAs<ceres::AnglesParameterBlock<2>>(
         poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::GimbalAngles, thetas);
-    const auto T_SC = std::dynamic_pointer_cast<const kinematics::GimbalTransformation<2>>(
+    const auto p_T_SC = std::dynamic_pointer_cast<const kinematics::GimbalTransformation<2>>(
         this->multiFrame(poseId)->T_SC(cameraIdx));
-    res *= (T_SC != nullptr);
+    res *= (p_T_SC != nullptr);
     if (res) {
-      auto new_T_SC = *T_SC;
+      auto new_T_SC = *p_T_SC;
       LOG(INFO) << "GimbalAngles: estimated angles " << thetas[0] << ", " << thetas[1];
       new_T_SC.setParameters(thetas);
       T_SCi = new_T_SC.overallT();
+
+      auto p_new_T_SC = std::allocate_shared<const kinematics::GimbalTransformation<2>>(
+          Eigen::aligned_allocator<kinematics::GimbalTransformation<2>>{}, new_T_SC);
+
+      // @todo move somewhere else?
+      this->multiFrame(poseId)->setT_SC(cameraIdx, p_new_T_SC);
     }
   }
   return res;
