@@ -46,6 +46,7 @@
 #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #include <opencv2/core/core.hpp> // Code that causes warning goes here
 #pragma GCC diagnostic pop
+#include <glog/logging.h>
 #include <okvis/kinematics/Transformation.hpp>
 #include <okvis/assert_macros.hpp>
 #include "okvis/cameras/CameraBase.hpp"
@@ -123,7 +124,7 @@ class NCameraSystem
   /// @param[in] cameraIndex The camera index for which the extrinsics should be returned.
   /// @return T_SC, the extrinsics.
   /// @todo Re-calculate overlap
-  inline void setT_SC(size_t cameraIndex, std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC);
+  void setT_SC(size_t cameraIndex, std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC);
 
   /// \brief get the camera geometry of camera cameraIndex
   /// @param[in] cameraIndex The camera index for which the camera geometry should be returned.
@@ -154,6 +155,7 @@ class NCameraSystem
   /// @return True, if valid.
   inline bool overlapComputationValid() const;
   std::vector<std::shared_ptr<const okvis::kinematics::TransformationBase>> T_SC_;  ///< Mounting transformations from IMU
+  std::vector<std::shared_ptr<const okvis::kinematics::TransformationBase>> T_SC_at_overlap_;  ///< T_SC at last computeOverlap()
   std::vector<std::shared_ptr<const cameras::CameraBase>> cameraGeometries_;  ///< Camera geometries
   std::vector<DistortionType> distortionTypes_;
   std::vector<std::vector<cv::Mat>> overlapMats_;  ///< Overlaps between cameras: mats

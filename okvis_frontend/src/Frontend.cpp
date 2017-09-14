@@ -513,6 +513,7 @@ void Frontend::matchStereo(okvis::Estimator& estimator,
       // first, check the possibility for overlap
       // FIXME: implement this in the Multiframe...!!
 
+      LOG(INFO) << "matchStereo(): hasOverlap(" << im0 << ", " << im1 << ") = " << multiFrame->hasOverlap(im0, im1);
       // check overlap
       if(!multiFrame->hasOverlap(im0, im1)){
         continue;

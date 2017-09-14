@@ -82,6 +82,7 @@ void NCameraSystem::computeOverlaps()
         const okvis::kinematics::Transformation T_Cother_C =
             T_SC_[cameraIndexSeenBy]->inverse() * (*T_SC_[cameraIndex]);
         bool hasOverlap = false;
+        int overlapPixels = 0;
         for (size_t u = 0; u < width; ++u) {
           for (size_t v = 0; v < height; ++v) {
             // backproject
@@ -104,6 +105,7 @@ void NCameraSystem::computeOverlaps()
               if(fabs(ray_Cother.normalized().transpose()*verificationRay.normalized()-1.0)<1.0e-10) {
                 // fill in the matrix:
                 overlapMat.at<uchar>(v,u) = 1;
+                ++overlapPixels;
                 // and remember there is some overlap at all.
                 if (!hasOverlap) {
                   overlaps_[cameraIndexSeenBy][cameraIndex] = true;
@@ -113,6 +115,8 @@ void NCameraSystem::computeOverlaps()
             }
           }
         }
+        LOG(INFO) << "computeOverlaps() " << cameraIndex << " seen by " << cameraIndexSeenBy << ": "
+                  << 100.0 * overlapPixels / (height*width) << "% overlap";
       }
       //std::stringstream name;
       //name << (cameraIndexSeenBy)<<"+"<<(cameraIndex);
@@ -120,6 +124,22 @@ void NCameraSystem::computeOverlaps()
     }
   }
   //cv::waitKey();
+  T_SC_at_overlap_ = T_SC_;
+}
+
+void NCameraSystem::setT_SC(size_t cameraIndex,
+                            std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC) {
+  T_SC_[cameraIndex] = T_SC;
+
+  // Compute overlap only if this camera has moved enough since last computation
+  const auto T_Cp_C = T_SC_at_overlap_[cameraIndex]->inverse() * (*T_SC);
+  // Consider rotation only for now
+  const auto angle_change = Eigen::AngleAxisd{T_Cp_C.q()}.angle();
+  LOG(INFO) << "setT_SC(" << cameraIndex << "): changed angle by " << angle_change;
+  const auto required_angle_change = 0.052;  // 3 degrees
+  if (angle_change > required_angle_change) {
+      computeOverlaps();
+  }
 }
 
 }  // namespace cameras

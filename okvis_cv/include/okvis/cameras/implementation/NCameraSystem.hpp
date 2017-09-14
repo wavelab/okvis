@@ -55,6 +55,7 @@ NCameraSystem::NCameraSystem(
     const std::vector<DistortionType>& distortionTypes,
     bool computeOverlaps)
     : T_SC_(T_SC),
+      T_SC_at_overlap_(T_SC),
       cameraGeometries_(cameraGeometries),
       distortionTypes_(distortionTypes)
 {
@@ -122,11 +123,6 @@ std::shared_ptr<const okvis::kinematics::TransformationBase> NCameraSystem::T_SC
   OKVIS_ASSERT_TRUE_DBG(Exception, cameraIndex < T_SC_.size(),
                         "Camera index " << cameraIndex << "out of range.");
   return T_SC_[cameraIndex];
-}
-
-void NCameraSystem::setT_SC(size_t cameraIndex,
-                            std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC) {
-  T_SC_[cameraIndex] = T_SC;
 }
 
 //get the camera geometry of camera cameraIndex

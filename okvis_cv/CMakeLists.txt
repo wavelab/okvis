@@ -23,6 +23,7 @@ target_link_libraries(${PROJECT_NAME}
   PUBLIC okvis_time
   PRIVATE ${OpenCV_LIBRARIES} 
   PRIVATE ${BRISK_LIBRARIES}
+  PRIVATE ${GLOG_LIBRARY}
 )
 
 # installation if required
