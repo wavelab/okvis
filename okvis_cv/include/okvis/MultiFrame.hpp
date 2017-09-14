@@ -117,7 +117,9 @@ class MultiFrame
   /// \brief Set the camera extrinsics
   /// @param[in] cameraIdx The camera index that took the image.
   /// @param[in] T_SC The extrinsics.
-  inline void setT_SC(size_t cameraIdx, std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC);
+  inline void setT_SC(size_t cameraIdx,
+                      std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC,
+                      bool computeOverlap = false);
 
   /// \brief Set the geometry
   /// @param[in] cameraIdx The camera index.

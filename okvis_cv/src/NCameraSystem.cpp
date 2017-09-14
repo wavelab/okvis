@@ -128,17 +128,24 @@ void NCameraSystem::computeOverlaps()
 }
 
 void NCameraSystem::setT_SC(size_t cameraIndex,
-                            std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC) {
+                            std::shared_ptr<const okvis::kinematics::TransformationBase> T_SC,
+                            bool computeOverlap) {
   T_SC_[cameraIndex] = T_SC;
 
-  // Compute overlap only if this camera has moved enough since last computation
-  const auto T_Cp_C = T_SC_at_overlap_[cameraIndex]->inverse() * (*T_SC);
-  // Consider rotation only for now
-  const auto angle_change = Eigen::AngleAxisd{T_Cp_C.q()}.angle();
-  LOG(INFO) << "setT_SC(" << cameraIndex << "): changed angle by " << angle_change;
-  const auto required_angle_change = 0.052;  // 3 degrees
-  if (angle_change > required_angle_change) {
+  if (computeOverlap) {
+    // Compute overlap only if this camera has moved enough since last computation
+    const auto T_Cp_C = T_SC_at_overlap_[cameraIndex]->inverse() * (*T_SC);
+    // Consider rotation only for now
+    auto angle_change = Eigen::AngleAxisd{T_Cp_C.q()}.angle();
+    if (angle_change > M_PI) {
+      angle_change = std::abs(2 * M_PI - angle_change);
+    }
+    //LOG(INFO) << "setT_SC(" << cameraIndex << "): changed angle by " << angle_change;
+
+    const auto required_angle_change = 0.14;  // 8 degrees
+    if (angle_change > required_angle_change) {
       computeOverlaps();
+    }
   }
 }
 
