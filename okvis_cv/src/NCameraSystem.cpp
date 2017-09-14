@@ -119,7 +119,7 @@ void NCameraSystem::computeOverlaps()
                   << 100.0 * overlapPixels / (height*width) << "% overlap";
 
         // @todo hardcoded constant
-        if (double{overlapPixels} / (height*width) > 0.50) {
+        if (1.0  * overlapPixels / (height*width) > 0.50) {
           overlaps_[cameraIndexSeenBy][cameraIndex] = true;
         } else {
           overlaps_[cameraIndexSeenBy][cameraIndex] = false;
