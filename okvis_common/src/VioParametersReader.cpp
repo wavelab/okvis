@@ -708,8 +708,9 @@ bool VioParametersReader::getCalibrationViaVisensorAPI(
             R[3], R[4], R[5], t[1],
             R[6], R[7], R[8], t[2],
             0,    0,    0,    1;
-    okvis::kinematics::Transformation T_CI_okvis(T_CI);
-    calibration.T_SC = T_CI_okvis.inverse();
+
+    okvis::kinematics::Transformation T_CI_okvis{T_CI};
+    calibration.T_SC.reset(new okvis::kinematics::Transformation(T_CI_okvis.inverse()));
 
     calibration.focalLength << calibrationFromAPI.focal_point[0],
                                calibrationFromAPI.focal_point[1];
