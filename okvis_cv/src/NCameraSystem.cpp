@@ -117,6 +117,13 @@ void NCameraSystem::computeOverlaps()
         }
         LOG(INFO) << "computeOverlaps() " << cameraIndex << " seen by " << cameraIndexSeenBy << ": "
                   << 100.0 * overlapPixels / (height*width) << "% overlap";
+
+        // @todo hardcoded constant
+        if (double{overlapPixels} / (height*width) > 0.50) {
+          overlaps_[cameraIndexSeenBy][cameraIndex] = true;
+        } else {
+          overlaps_[cameraIndexSeenBy][cameraIndex] = false;
+        }
       }
       //std::stringstream name;
       //name << (cameraIndexSeenBy)<<"+"<<(cameraIndex);
