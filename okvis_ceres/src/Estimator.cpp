@@ -207,8 +207,6 @@ bool Estimator::addStates(
     // Dynamic camera extension
     if (T_SC_as_gimbal) {
       // We have a GimbalTransformation. optimize over the joint angles.
-      LOG(INFO) << "Optimizing over joint angles for camera " << i;
-
       cameraInfos.at(CameraSensorStates::GimbalAngles).exists = true;
 
       // add a pose parameter block for the gimbal angles
