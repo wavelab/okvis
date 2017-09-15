@@ -54,10 +54,11 @@ opengv::absolute_pose::FrameNoncentralAbsoluteAdapter::FrameNoncentralAbsoluteAd
     std::shared_ptr<okvis::MultiFrame> frame) {
 
   size_t numCameras = nCameraSystem.numCameras();
+  numCameras = 1;  // @todo! setting for gimbal experiment
 
   // find distortion type
   okvis::cameras::NCameraSystem::DistortionType distortionType= nCameraSystem.distortionType(0);
-  for (size_t i = 1; i < nCameraSystem.numCameras(); ++i) {
+  for (size_t i = 1; i < numCameras; ++i) {
     OKVIS_ASSERT_TRUE(Exception, distortionType == nCameraSystem.distortionType(i),
                             "mixed frame types are not supported yet");
   }
