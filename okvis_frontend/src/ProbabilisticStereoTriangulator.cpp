@@ -277,18 +277,12 @@ void ProbabilisticStereoTriangulator<CAMERA_GEOMETRY_T>::getUncertainty(
   Eigen::Matrix2d inverseMeasurementCovariance = Eigen::Matrix2d::Identity()
       * (1.0 / (keypointStdDev * keypointStdDev));
 
-  // Dynamic camera extension workaround
-  // We can't pass a pointer to a GimbalTransformation here because we don't have the correct parameter block
-  // (we don't care about extrinsics anyway). So, convert to a standard Transformation first.
-  auto pT_SC_A = std::shared_ptr<okvis::kinematics::TransformationBase>{nullptr};
-  auto pT_SC_B = std::shared_ptr<okvis::kinematics::TransformationBase>{nullptr};
-
   ::okvis::ceres::ReprojectionError<CAMERA_GEOMETRY_T> reprojectionErrorA(
       frameA_->geometryAs<CAMERA_GEOMETRY_T>(camIdA_),
       0,
       kptA,
       inverseMeasurementCovariance,
-      pT_SC_A);
+      nullptr);
   //typename keypointA_t::measurement_t residualA;
   Eigen::Matrix<double, 2, 1> residualA;
   Eigen::Matrix<double, 2, 4, Eigen::RowMajor> J_hpA;
@@ -319,7 +313,7 @@ void ProbabilisticStereoTriangulator<CAMERA_GEOMETRY_T>::getUncertainty(
       0,
       kptB,
       inverseMeasurementCovariance,
-      pT_SC_B);
+      nullptr);
   Eigen::Matrix<double, 2, 1> residualB;
   Eigen::Matrix<double, 2, 7, Eigen::RowMajor> J_TB;
   Eigen::Matrix<double, 2, 6, Eigen::RowMajor> J_TB_min;
