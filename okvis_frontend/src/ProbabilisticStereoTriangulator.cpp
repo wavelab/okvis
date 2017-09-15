@@ -280,10 +280,8 @@ void ProbabilisticStereoTriangulator<CAMERA_GEOMETRY_T>::getUncertainty(
   // Dynamic camera extension workaround
   // We can't pass a pointer to a GimbalTransformation here because we don't have the correct parameter block
   // (we don't care about extrinsics anyway). So, convert to a standard Transformation first.
-  auto pT_SC_A = std::shared_ptr<okvis::kinematics::TransformationBase>{
-      new okvis::kinematics::Transformation{frameA_->T_SC(camIdA_)->T()}};
-  auto pT_SC_B = std::shared_ptr<okvis::kinematics::TransformationBase>{
-      new okvis::kinematics::Transformation{frameA_->T_SC(camIdA_)->T()}};
+  auto pT_SC_A = std::shared_ptr<okvis::kinematics::TransformationBase>{nullptr};
+  auto pT_SC_B = std::shared_ptr<okvis::kinematics::TransformationBase>{nullptr};
 
   ::okvis::ceres::ReprojectionError<CAMERA_GEOMETRY_T> reprojectionErrorA(
       frameA_->geometryAs<CAMERA_GEOMETRY_T>(camIdA_),
