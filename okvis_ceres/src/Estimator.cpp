@@ -228,7 +228,7 @@ bool Estimator::addStates(
         new_T_SC.setParameters(estimate);
         auto p_new_T_SC = std::allocate_shared<const kinematics::GimbalTransformation<2>>(
             Eigen::aligned_allocator<kinematics::GimbalTransformation<2>>{}, new_T_SC);
-        multiFrame->setT_SC(i, p_new_T_SC, true);
+        multiFrame->setT_SC(i, p_new_T_SC, false);
         LOG(INFO) << "GimbalAngles: estimated angles " << estimate[0] << ", " << estimate[1];
 
       } else {

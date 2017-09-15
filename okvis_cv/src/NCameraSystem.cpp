@@ -147,7 +147,7 @@ void NCameraSystem::setT_SC(size_t cameraIndex,
     if (angle_change > M_PI) {
       angle_change = std::abs(2 * M_PI - angle_change);
     }
-    //LOG(INFO) << "setT_SC(" << cameraIndex << "): changed angle by " << angle_change;
+    LOG(INFO) << "setT_SC(" << cameraIndex << "): changed angle by " << angle_change;
 
     const auto required_angle_change = 0.14;  // 8 degrees
     if (angle_change > required_angle_change) {
